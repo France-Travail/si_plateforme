@@ -25,7 +25,7 @@ Ce repository propose une **expérimentation pilote** autour du parcours **Loi P
 Vous y trouverez :
 - 🔄 une **cinématique d’implémentation**  
   → pour comprendre l’enchaînement des API et la logique du parcours
-- 🧪 une **collection Postman prête à l’emploi**  
+- 🧪 [une collection Postman prête à l’emploi](parcours_Loi_Pour_l_Emploi/collection_postman_LPE/README.md)  
   → pour tester et expérimenter les API rapidement
  
 ---
