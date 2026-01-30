@@ -23,9 +23,9 @@ Que vous soyez :
 Ce repository propose une **expérimentation pilote** autour du parcours **Loi Pour l’Emploi**, utilisée comme **référence d’onboarding**.
  
 Vous y trouverez :
-- 🔄 une **cinématique d’implémentation**  
+- 🔄 une [cinématique d’implémentation](parcours_Loi_Pour_l_Emploi/collection_postman_LPE/README.md)  
   → pour comprendre l’enchaînement des API et la logique du parcours
-- 🧪 [une collection Postman prête à l’emploi](parcours_Loi_Pour_l_Emploi/collection_postman_LPE/README.md)  
+- 🧪 [une collection Postman prête à l’emploi](parcours_Loi_Pour_l_Emploi/schemas_et_cinematique_LPE/README.md)  
   → pour tester et expérimenter les API rapidement
  
 ---
