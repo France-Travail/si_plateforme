@@ -1,0 +1,643 @@
+{
+  "openapi": "3.0.3",
+  "x-stoplight": {
+    "id": "stiz1g575wvlb"
+  },
+  "info": {
+    "version": "2.0",
+    "title": "Rechercher usager",
+    "description": "Ce service permet de rechercher un usager connu du réseau pour l'emploi en fonction de critères discriminants et le cas échéant de récupérer un jeton usager permettant d'accéder à d'autres API\r\n\r\n**Scope :** `api_rechercher-usagerv2`,`rechercheusager`,`profil_accedant`\r\n\r\n**Royaume :** `/agent`"
+  },
+  "servers": [
+    {
+      "url": "https://api.francetravail.io/partenaire/rechercher-usager/v2"
+    }
+  ],
+  "paths": {
+    "/usagers/par-datenaissance-et-nir": {
+      "post": {
+        "tags": [
+          "Par date de naissance et NIR"
+        ],
+        "summary": "Rechercher un usager par date de naissance et numéro de sécurité sociale (NIR)",
+        "description": "A partir de la saisie de la date de naissance et du NIR, cette API fournit un jeton usager crypté dès lors que l’individu est connu de France Travail. Ce jeton va permettre la consommation d’autres services API nécessitant un jeton usager en clé d’appel.",
+        "operationId": "RechercherUsagerParDateNaissanceEtNir",
+        "parameters": [
+          {
+            "name": "pa-nom-agent",
+            "in": "header",
+            "required": true,
+            "description": "**Attribut obligatoire en mode Client Credentials**.\r\n\r\n Nom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.\r\n\r\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch.",
+            "schema": {
+              "type": "string",
+              "example": "Martin"
+            }
+          },
+          {
+            "name": "pa-prenom-agent",
+            "in": "header",
+            "required": true,
+            "description": "**Attribut obligatoire en mode Client Credentials**.\r\n\r\n Prénom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.\r\n\r\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch.",
+            "schema": {
+              "type": "string",
+              "example": "Henri"
+            }
+          },
+          {
+            "name": "pa-identifiant-agent",
+            "in": "header",
+            "required": true,
+            "description": "**Attribut obligatoire en mode Client Credentials**.\r\n\r\n Identifiant de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.\r\n\r\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch.",
+            "schema": {
+              "type": "string",
+              "example": "IdentifiantAgent"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json; charset=utf-8": {
+              "schema": {
+                "$ref": "#/components/schemas/ParDateNaissanceEtNirDTO"
+              },
+              "examples": {
+                "Exemple d'appel": {
+                  "value": {
+                    "dateNaissance": "1972-06-01",
+                    "nir": "1720678355011"
+                  }
+                }
+              }
+            }
+          },
+          "description": ""
+        },
+        "responses": {
+          "200": {
+            "description": "Retourne les informations de l'usager trouvé",
+            "content": {
+              "application/json; charset=utf-8": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultatDTO"
+                },
+                "examples": {
+                  "Usager trouvé": {
+                    "value": {
+                      "codeRetour": "S001",
+                      "message": "Usager trouvé",
+                      "topIdentiteCertifiee": "O",
+                      "jetonUsager": "ewogICJ2ZXJzIiA6ICIwLjEiLAogICJ1dWlkIiA6ICJjOTE5YmY4Yy0yY2E5LTQ3MjYtYWEwMy1jNGE1ZTEyODI4ZDUiLAogICJleHBpcmUiIDogMTcyNjU4NjEyNjY0NywKICAidHlwZSIgOiAiL3BhcnRlbmFpcmUiLAogICJkYXRhIiA6ICI1MmEwOGU4YS1jMmFhLTRlODQtYTQ2NS1lMTIwZWU2YzQxM2UjQWtFRjZtSnRtRm9HOWlXS3pCbTdITmNKeVpVM2ZNc1dURHBhSktibUNSWkM3WWd5YVFWSzhwWkJCMWQ3aTc0dzhOamRja01URkFZR0xXWklEd3JYRVhDaE5XOUhIVU9fcDByTV9kajFKbFozdElBQURMUURTX2ZsUlBWMW1BdmtPbTl4WEFSQWoxQWFlQkJCdW9hQjhCNWJJVU8xTWhBMHE0Q3drMGhQS2ZrIgp9"
+                    }
+                  },
+                  "Usager trouvé non certifié": {
+                    "value": {
+                      "codeRetour": "S001",
+                      "message": "Usager trouvé",
+                      "topIdentiteCertifiee": "N",
+                      "jetonUsager": "ewogICJ2ZXJzIiA6ICIwLjEiLAogICJ1dWlkIiA6ICJjOTE5YmY4Yy0yY2E5LTQ3MjYtYWEwMy1jNGE1ZTEyODI4ZDUiLAogICJleHBpcmUiIDogMTcyNjU4NjEyNjY0NywKICAidHlwZSIgOiAiL3BhcnRlbmFpcmUiLAogICJkYXRhIiA6ICI1MmEwOGU4YS1jMmFhLTRlODQtYTQ2NS1lMTIwZWU2YzQxM2UjQWtFRjZtSnRtRm9HOWlXS3pCbTdITmNKeVpVM2ZNc1dURHBhSktibUNSWkM3WWd5YVFWSzhwWkJCMWQ3aTc0dzhOamRja01URkFZR0xXWklEd3JYRVhDaE5XOUhIVU9fcDByTV9kajFKbFozdElBQURMUURTX2ZsUlBWMW1BdmtPbTl4WEFSQWoxQWFlQkJCdW9hQjhCNWJJVU8xTWhBMHE0Q3drMGhQS2ZrIgp9"
+                    }
+                  },
+                  "Aucun usager trouvé": {
+                    "value": {
+                      "codeRetour": "S002",
+                      "message": "Aucun usager trouvé",
+                      "topIdentiteCertifiee": "null",
+                      "jetonUsager": "null"
+                    }
+                  },
+                  "Plus d'un usager trouvé": {
+                    "value": {
+                      "codeRetour": "S003",
+                      "message": "Plusieurs usagers trouvés",
+                      "topIdentiteCertifiee": "null",
+                      "jetonUsager": "null"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Le ou les paramètres fournis en entrée sont erronés ou absents",
+            "content": {
+              "application/json; charset=utf-8": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resultat400DTO"
+                },
+                "examples": {
+                  "Erreur de validation": {
+                    "value": {
+                      "codeRetour": "R997",
+                      "message": "Une erreur de validation s'est produite",
+                      "topIdentiteCertifiee": "null",
+                      "jetonUsager": "null"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "L'accès à cette ressource n'est pas autorisé",
+            "content": {
+              "application/json; charset=utf-8": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resultat403DTO"
+                },
+                "examples": {
+                  "Accès non autorisé": {
+                    "value": {
+                      "codeRetour": "R001",
+                      "message": "Accès non autorisé",
+                      "topIdentiteCertifiee": "null",
+                      "jetonUsager": "null"
+                    }
+                  },
+                  "L'usager et l'accédant ne sont pas dans la même structure": {
+                    "value": {
+                      "codeRetour": "R002",
+                      "message": "L'usager n'est pas rattaché à la structure de l'accédant",
+                      "topIdentiteCertifiee": "null",
+                      "jetonUsager": "null"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Service en erreur",
+            "content": {
+              "application/json; charset=utf-8": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resultat500DTO"
+                },
+                "examples": {
+                  "Service en erreur": {
+                    "value": {
+                      "codeRetour": "R998",
+                      "message": "Un service a répondu en erreur",
+                      "topIdentiteCertifiee": "null",
+                      "jetonUsager": "null"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Le service est actuellement indisponible",
+            "content": {
+              "application/json; charset=utf-8": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resultat503DTO"
+                },
+                "examples": {
+                  "Service indisponible": {
+                    "value": {
+                      "codeRetour": "R999",
+                      "message": "Service indisponible, veuillez réessayer ultérieurement",
+                      "topIdentiteCertifiee": "null",
+                      "jetonUsager": "null"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "servers": [
+          {
+            "url": "https://api.francetravail.io/partenaire/rechercher-usager/v2",
+            "description": "PROD"
+          }
+        ],
+        "x-stoplight": {
+          "id": "zhbqoh8q82j97"
+        }
+      }
+    },
+    "/usagers/par-numero-francetravail": {
+      "post": {
+        "tags": [
+          "Par numéro France Travail"
+        ],
+        "summary": "Rechercher un usager par numéro France Travail",
+        "description": "A partir de la saisie du numéro France Travail, cette API fournit un jeton usager crypté dès lors que l’individu est connu de France Travail. Ce jeton va permettre la consommation d’autres services API nécessitant un jeton usager en clé d’appel.",
+        "operationId": "RechercherUsagerParNumeroFranceTravail",
+        "parameters": [
+          {
+            "name": "pa-nom-agent",
+            "in": "header",
+            "required": true,
+            "description": "**Attribut obligatoire en mode Client Credentials**.\r\n\r\n Nom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.\r\n\r\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch.",
+            "schema": {
+              "type": "string",
+              "example": "Martin"
+            }
+          },
+          {
+            "name": "pa-prenom-agent",
+            "in": "header",
+            "required": true,
+            "description": "**Attribut obligatoire en mode Client Credentials**.\r\n\r\n Prénom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.\r\n\r\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch.",
+            "schema": {
+              "type": "string",
+              "example": "Henri"
+            }
+          },
+          {
+            "name": "pa-identifiant-agent",
+            "in": "header",
+            "required": true,
+            "description": "**Attribut obligatoire en mode Client Credentials**.\r\n\r\n Identifiant de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.\r\n\r\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch.",
+            "schema": {
+              "type": "string",
+              "example": "IdentifiantAgent"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json; charset=utf-8": {
+              "schema": {
+                "$ref": "#/components/schemas/ParNumeroFTDTO"
+              },
+              "examples": {
+                "Exemple": {
+                  "value": {
+                    "numeroFranceTravail": "12345678901"
+                  }
+                }
+              }
+            }
+          },
+          "description": ""
+        },
+        "responses": {
+          "200": {
+            "description": "Retourne les informations de l'usager trouvé",
+            "content": {
+              "application/json; charset=utf-8": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultatDTO"
+                },
+                "examples": {
+                  "Usager trouvé": {
+                    "value": {
+                      "codeRetour": "S001",
+                      "message": "Usager trouvé",
+                      "topIdentiteCertifiee": "O",
+                      "jetonUsager": "ewogICJ2ZXJzIiA6ICIwLjEiLAogICJ1dWlkIiA6ICJjOTE5YmY4Yy0yY2E5LTQ3MjYtYWEwMy1jNGE1ZTEyODI4ZDUiLAogICJleHBpcmUiIDogMTcyNjU4NjEyNjY0NywKICAidHlwZSIgOiAiL3BhcnRlbmFpcmUiLAogICJkYXRhIiA6ICI1MmEwOGU4YS1jMmFhLTRlODQtYTQ2NS1lMTIwZWU2YzQxM2UjQWtFRjZtSnRtRm9HOWlXS3pCbTdITmNKeVpVM2ZNc1dURHBhSktibUNSWkM3WWd5YVFWSzhwWkJCMWQ3aTc0dzhOamRja01URkFZR0xXWklEd3JYRVhDaE5XOUhIVU9fcDByTV9kajFKbFozdElBQURMUURTX2ZsUlBWMW1BdmtPbTl4WEFSQWoxQWFlQkJCdW9hQjhCNWJJVU8xTWhBMHE0Q3drMGhQS2ZrIgp9"
+                    }
+                  },
+                  "Usager trouvé non certifié": {
+                    "value": {
+                      "codeRetour": "S001",
+                      "message": "Usager trouvé",
+                      "topIdentiteCertifiee": "N",
+                      "jetonUsager": "ewogICJ2ZXJzIiA6ICIwLjEiLAogICJ1dWlkIiA6ICJjOTE5YmY4Yy0yY2E5LTQ3MjYtYWEwMy1jNGE1ZTEyODI4ZDUiLAogICJleHBpcmUiIDogMTcyNjU4NjEyNjY0NywKICAidHlwZSIgOiAiL3BhcnRlbmFpcmUiLAogICJkYXRhIiA6ICI1MmEwOGU4YS1jMmFhLTRlODQtYTQ2NS1lMTIwZWU2YzQxM2UjQWtFRjZtSnRtRm9HOWlXS3pCbTdITmNKeVpVM2ZNc1dURHBhSktibUNSWkM3WWd5YVFWSzhwWkJCMWQ3aTc0dzhOamRja01URkFZR0xXWklEd3JYRVhDaE5XOUhIVU9fcDByTV9kajFKbFozdElBQURMUURTX2ZsUlBWMW1BdmtPbTl4WEFSQWoxQWFlQkJCdW9hQjhCNWJJVU8xTWhBMHE0Q3drMGhQS2ZrIgp9"
+                    }
+                  },
+                  "Aucun usager trouvé": {
+                    "value": {
+                      "codeRetour": "S002",
+                      "message": "Aucun usager trouvé",
+                      "topIdentiteCertifiee": "null",
+                      "jetonUsager": "null"
+                    }
+                  },
+                  "Plus d'un usager trouvé": {
+                    "value": {
+                      "codeRetour": "S003",
+                      "message": "Plusieurs usagers trouvés",
+                      "topIdentiteCertifiee": "null",
+                      "jetonUsager": "null"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Le ou les paramètres fournis en entrée sont erronés ou absents",
+            "content": {
+              "application/json; charset=utf-8": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resultat400DTO"
+                },
+                "examples": {
+                  "Erreur de validation": {
+                    "value": {
+                      "codeRetour": "R997",
+                      "message": "Une erreur de validation s'est produite",
+                      "topIdentiteCertifiee": "null",
+                      "jetonUsager": "null"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "L'accès à cette ressource n'est pas autorisé",
+            "content": {
+              "application/json; charset=utf-8": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resultat403DTO"
+                },
+                "examples": {
+                  "Accès non autorisé": {
+                    "value": {
+                      "codeRetour": "R001",
+                      "message": "Accès non autorisé",
+                      "topIdentiteCertifiee": "null",
+                      "jetonUsager": "null"
+                    }
+                  },
+                  "L'usager et l'accédant ne sont pas dans la même structure": {
+                    "value": {
+                      "codeRetour": "R002",
+                      "message": "L'usager n'est pas rattaché à la structure de l'accédant",
+                      "topIdentiteCertifiee": "null",
+                      "jetonUsager": "null"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Service en erreur",
+            "content": {
+              "application/json; charset=utf-8": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resultat500DTO"
+                },
+                "examples": {
+                  "Service en erreur": {
+                    "value": {
+                      "codeRetour": "R998",
+                      "message": "Un service a répondu en erreur",
+                      "topIdentiteCertifiee": "null",
+                      "jetonUsager": "null"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Le service est actuellement indisponible",
+            "content": {
+              "application/json; charset=utf-8": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resultat503DTO"
+                },
+                "examples": {
+                  "Service indisponible": {
+                    "value": {
+                      "codeRetour": "R999",
+                      "message": "Service indisponible, veuillez réessayer ultérieurement",
+                      "topIdentiteCertifiee": "null",
+                      "jetonUsager": "null"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "servers": [
+          {
+            "url": "https://api.francetravail.io/partenaire/rechercher-usager/v2",
+            "description": "PROD"
+          }
+        ],
+        "x-stoplight": {
+          "id": "h2g9pxc5lp1vw"
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Par date de naissance et NIR",
+      "description": "Rechercher par date de naissance et numéro de sécurité sociale"
+    },
+    {
+      "name": "Par numéro France Travail",
+      "description": "Rechercher par numéro France Travail"
+    }
+  ],
+  "components": {
+    "schemas": {
+      "ParDateNaissanceEtNirDTO": {
+        "type": "object",
+        "properties": {
+          "dateNaissance": {
+            "type": "string",
+            "description": "Date de naissance au format AAAA-MM-JJ.",
+            "example": "1972-06-01"
+          },
+          "nir": {
+            "type": "string",
+            "description": "Numéro d'Inscription au Répertoire ou Numéro de Sécurité Sociale.<br/>Au format sans la clé (13 chiffres) ou avec la clé (15 chiffres).",
+            "example": "1720678355011"
+          }
+        },
+        "required": [
+          "dateNaissance",
+          "nir"
+        ],
+        "x-stoplight": {
+          "id": "b1pvzutdw5ylb"
+        }
+      },
+      "ResultatDTO": {
+        "type": "object",
+        "properties": {
+          "codeRetour": {
+            "type": "string",
+            "description": "Code retour de la recherche usager.",
+            "example": "S001"
+          },
+          "message": {
+            "type": "string",
+            "description": "Message explicatif du code retour.",
+            "example": "Usager trouvé"
+          },
+          "topIdentiteCertifiee": {
+            "type": "string",
+            "enum": [
+              "O",
+              "N",
+              "null"
+            ],
+            "description": "- O : l'identité de l'usager est certifiée.\r\n- N : l'identité de l'usager n'est pas certifiée.\r\n- null : non applicable",
+            "example": "O"
+          },
+          "jetonUsager": {
+            "type": "string",
+            "description": "Le jeton usager à fournir aux APIs qui l'acceptent.",
+            "example": "ewogICJ2ZXJzIiA6ICIwLjEiLAogICJ1dWlkIiA6ICJjOTE5YmY4Yy0yY2E5LTQ3MjYtYWEwMy1jNGE1ZTEyODI4ZDUiLAogICJleHBpcmUiIDogMTcyNjU4NjEyNjY0NywKICAidHlwZSIgOiAiL3BhcnRlbmFpcmUiLAogICJkYXRhIiA6ICI1MmEwOGU4YS1jMmFhLTRlODQtYTQ2NS1lMTIwZWU2YzQxM2UjQWtFRjZtSnRtRm9HOWlXS3pCbTdITmNKeVpVM2ZNc1dURHBhSktibUNSWkM3WWd5YVFWSzhwWkJCMWQ3aTc0dzhOamRja01URkFZR0xXWklEd3JYRVhDaE5XOUhIVU9fcDByTV9kajFKbFozdElBQURMUURTX2ZsUlBWMW1BdmtPbTl4WEFSQWoxQWFlQkJCdW9hQjhCNWJJVU8xTWhBMHE0Q3drMGhQS2ZrIgp9"
+          }
+        },
+        "x-stoplight": {
+          "id": "k2cs336nbqv81"
+        }
+      },
+      "Resultat400DTO": {
+        "type": "object",
+        "properties": {
+          "codeRetour": {
+            "type": "string",
+            "description": "Code retour de la recherche usager.",
+            "example": "R997"
+          },
+          "message": {
+            "type": "string",
+            "description": "Message explicatif du code retour.",
+            "example": "Une erreur de validation s'est produite"
+          },
+          "topIdentiteCertifiee": {
+            "type": "string",
+            "enum": [
+              "O",
+              "N",
+              "null"
+            ],
+            "description": "- O : l'identité de l'usager est certifiée.\r\n- N : l'identité de l'usager n'est pas certifiée.\r\n- null : non applicable",
+            "example": "null"
+          },
+          "jetonUsager": {
+            "type": "string",
+            "description": "Le jeton usager à fournir aux APIs qui l'acceptent.",
+            "example": "null"
+          }
+        },
+        "x-stoplight": {
+          "id": "i0ukx39eholjx"
+        }
+      },
+      "Resultat403DTO": {
+        "type": "object",
+        "properties": {
+          "codeRetour": {
+            "type": "string",
+            "description": "Code retour de la recherche usager.",
+            "example": "R001"
+          },
+          "message": {
+            "type": "string",
+            "description": "Message explicatif du code retour.",
+            "example": "Accès non autorisé"
+          },
+          "topIdentiteCertifiee": {
+            "type": "string",
+            "enum": [
+              "O",
+              "N",
+              "null"
+            ],
+            "description": "- O : l'identité de l'usager est certifiée.\r\n- N : l'identité de l'usager n'est pas certifiée.\r\n- null : non applicable",
+            "example": "null"
+          },
+          "jetonUsager": {
+            "type": "string",
+            "description": "Le jeton usager à fournir aux APIs qui l'acceptent.",
+            "example": "null"
+          }
+        },
+        "x-stoplight": {
+          "id": "ezuk2m2tyqzj1"
+        }
+      },
+      "Resultat500DTO": {
+        "type": "object",
+        "properties": {
+          "codeRetour": {
+            "type": "string",
+            "description": "Code retour de la recherche usager.",
+            "example": "R998"
+          },
+          "message": {
+            "type": "string",
+            "description": "Message explicatif du code retour.",
+            "example": "Un service a répondu en erreur"
+          },
+          "topIdentiteCertifiee": {
+            "type": "string",
+            "enum": [
+              "O",
+              "N",
+              "null"
+            ],
+            "description": "- O : l'identité de l'usager est certifiée.\r\n- N : l'identité de l'usager n'est pas certifiée.\r\n- null : non applicable",
+            "example": "null"
+          },
+          "jetonUsager": {
+            "type": "string",
+            "description": "Le jeton usager à fournir aux APIs qui l'acceptent.",
+            "example": "null"
+          }
+        },
+        "x-stoplight": {
+          "id": "z349dkwwo4wag"
+        }
+      },
+      "Resultat503DTO": {
+        "type": "object",
+        "properties": {
+          "codeRetour": {
+            "type": "string",
+            "description": "Code retour de la recherche usager.",
+            "example": "R999"
+          },
+          "message": {
+            "type": "string",
+            "description": "Message explicatif du code retour.",
+            "example": "Service indisponible, veuillez réessayer ultérieurement"
+          },
+          "topIdentiteCertifiee": {
+            "type": "string",
+            "enum": [
+              "O",
+              "N",
+              "null"
+            ],
+            "description": "- O : l'identité de l'usager est certifiée.\r\n- N : l'identité de l'usager n'est pas certifiée.\r\n- null : non applicable",
+            "example": "null"
+          },
+          "jetonUsager": {
+            "type": "string",
+            "description": "Le jeton usager à fournir aux APIs qui l'acceptent.",
+            "example": "null"
+          }
+        },
+        "x-stoplight": {
+          "id": "56g9h8gptqq5g"
+        }
+      },
+      "ParNumeroFTDTO": {
+        "title": "ParNumeroFTDTO",
+        "x-stoplight": {
+          "id": "0t7funyjopy7q"
+        },
+        "type": "object",
+        "properties": {
+          "numeroFranceTravail": {
+            "type": "string",
+            "description": "Le numéro France Travail de l'usager recherché.",
+            "example": "12345678901"
+          }
+        },
+        "required": [
+          "numeroFranceTravail"
+        ]
+      }
+    }
+  }
+}
