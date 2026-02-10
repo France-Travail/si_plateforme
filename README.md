@@ -27,6 +27,8 @@ Vous y trouverez :
   → pour comprendre l’enchaînement des API et la logique du parcours
 - 🧪 [une collection Postman prête à l’emploi](parcours_Loi_Pour_l_Emploi/schemas_et_cinematique_LPE/README.md)  
   → pour tester et expérimenter les API rapidement
+- 🧪 [des exemple de code en java](parcours_Loi_Pour_l_Emploi/bonnes_pratiques_et_exemples_de_code/README.md)  
+  → pour illustrer quelques bonnes pratiques et expérimentations autour de la consommation d'APIs
  
 ---
  
