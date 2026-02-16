@@ -25,9 +25,9 @@ Ce repository propose une **expérimentation pilote** autour du parcours **Loi P
 Vous y trouverez :
 - 🔄 une [cinématique d’implémentation](https://github.com/France-Travail/si_plateforme/tree/main/parcours_Loi_Pour_l_Emploi/schemas_et_cinematique_LPE)  
   → pour comprendre l’enchaînement des API et la logique du parcours
-- 🧪 [une collection Postman prête à l’emploi](parcours_Loi_Pour_l_Emploi/schemas_et_cinematique_LPE/README.md)  
+- 🧪 [une collection Postman prête à l’emploi](https://github.com/France-Travail/si_plateforme/tree/main/parcours_Loi_Pour_l_Emploi/collection_postman_LPE)  
   → pour tester et expérimenter les API rapidement
-- 🧪 [des exemple de code en java](parcours_Loi_Pour_l_Emploi/bonnes_pratiques_et_exemples_de_code/README.md)  
+- 🧪 [des exemple de code en java](https://github.com/France-Travail/si_plateforme/tree/main/parcours_Loi_Pour_l_Emploi/bonnes_pratiques_et_exemples_de_code)  
   → pour illustrer quelques bonnes pratiques et expérimentations autour de la consommation d'APIs
  
 ---
