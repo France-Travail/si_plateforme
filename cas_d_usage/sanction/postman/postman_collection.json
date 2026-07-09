@@ -1,0 +1,1213 @@
+{
+  "info": {
+    "_postman_id": "466efc32-de81-40c9-bb9d-35b41d778cbc",
+    "name": "Loi Plein Emploi - parcours fonctionnels",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Valider une proposition de suspension de RSA pour un bRSA accompagné par FT",
+      "item": [
+        {
+          "name": "Récupération du token d'accès",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{auth_base_url}}/connexion/oauth2/access_token",
+              "host": [
+                "{{auth_base_url}}"
+              ],
+              "path": [
+                "connexion",
+                "oauth2",
+                "access_token"
+              ]
+            },
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "grant_type",
+                  "value": "client_credentials",
+                  "type": "text"
+                },
+                {
+                  "key": "client_id",
+                  "value": "{{client_id}}",
+                  "type": "text"
+                },
+                {
+                  "key": "client_secret",
+                  "value": "{{client_secret}}",
+                  "type": "text"
+                },
+                {
+                  "key": "scope",
+                  "value": "{{scopes}}",
+                  "type": "text"
+                }
+              ]
+            },
+            "description": "Récupération d'un access token avec les scopes adéquats\n\n*(step inliné depuis le workflow `wf-authentification`)*"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"access_token is not null\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.access_token).to.not.be.null;",
+                  "});",
+                  "",
+                  "// Persistance des outputs dans l'environnement Postman",
+                  "var jsonData = pm.response.json();",
+                  "pm.environment.set(\"recuperer-access-token_accessToken\", jsonData.access_token);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Récupération des propositions de suspension RSA",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "pa-nom-agent",
+                "value": "{{pa-nom-agent}}",
+                "description": "**Attribut obligatoire en mode Client Credentials.**\n\n.Nom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.\n\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch.",
+                "disabled": true
+              },
+              {
+                "key": "pa-prenom-agent",
+                "value": "{{pa-prenom-agent}}",
+                "description": "**Attribut obligatoire en mode Client Credentials.**\n\n.Prénom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.\n\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch.",
+                "disabled": true
+              },
+              {
+                "key": "pa-identifiant-agent",
+                "value": "{{pa-identifiant-agent}}",
+                "description": "**Attribut obligatoire en mode Client Credentials.**\n\nIdentifiant de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.\n\nDans le cadre d'un appel depuis un traitement de type batch, renseigner \"BATCH\"",
+                "disabled": true
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{recuperer-access-token_accessToken}}",
+                "description": "Token d'authentification Bearer"
+              }
+            ],
+            "url": {
+              "raw": "{{api_base_url}}/activites-operationnelles/v2/activites/chercher",
+              "host": [
+                "{{api_base_url}}"
+              ],
+              "path": [
+                "activites-operationnelles",
+                "v2",
+                "activites",
+                "chercher"
+              ],
+              "query": [
+                {
+                  "key": "codeActivite",
+                  "value": "ACT366",
+                  "description": "Code de l'activité. String de caractères alphanumériques en majuscules."
+                },
+                {
+                  "key": "codeDomaine",
+                  "value": "{{codeDomaine}}",
+                  "description": "Code du domaine. String de 3 caractères alphabétiques en majuscules.",
+                  "disabled": true
+                },
+                {
+                  "key": "codeFamille",
+                  "value": "{{codeFamille}}",
+                  "description": "Code de la famille. String de caractères alphanumériques en majuscules.",
+                  "disabled": true
+                },
+                {
+                  "key": "cursor",
+                  "value": "{{cursor}}",
+                  "description": "Curseur du dernier appel. Permet de lire la suite de la liste en enrichissant ce paramètre et en laissant les paramètres du dernier appel",
+                  "disabled": true
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"activites[0].usager[0].typeIdentifiant equals numeroFranceTravail\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.activites[0].usager[0].typeIdentifiant).to.eql(\"numeroFranceTravail\");",
+                  "});",
+                  "pm.test(\"activites[0].attributsSpecifiques[0].nom equals identifiantConsequenceSanction\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.activites[0].attributsSpecifiques[0].nom).to.eql(\"identifiantConsequenceSanction\");",
+                  "});",
+                  "",
+                  "// Persistance des outputs dans l'environnement Postman",
+                  "var jsonData = pm.response.json();",
+                  "pm.environment.set(\"recuperer-propositions-suspension-RSA-a-instruire_numeroFranceTravail\", jsonData.activites[0].usager[0].identifiant);",
+                  "pm.environment.set(\"recuperer-propositions-suspension-RSA-a-instruire_identifiantConsequenceSanction\", jsonData.activites[0].attributsSpecifiques[0].valeur);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Génération du jeton usager",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "pa-nom-agent",
+                "value": "Martin",
+                "description": "**Attribut obligatoire en mode Client Credentials**.\r\n\r\n Nom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.\r\n\r\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch."
+              },
+              {
+                "key": "pa-prenom-agent",
+                "value": "Henri",
+                "description": "**Attribut obligatoire en mode Client Credentials**.\r\n\r\n Prénom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.\r\n\r\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch."
+              },
+              {
+                "key": "pa-identifiant-agent",
+                "value": "IdentifiantAgent",
+                "description": "**Attribut obligatoire en mode Client Credentials**.\r\n\r\n Identifiant de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.\r\n\r\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch."
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{{recuperer-access-token_accessToken}}",
+                "description": "Token d'authentification Bearer"
+              }
+            ],
+            "url": {
+              "raw": "{{api_base_url}}/rechercher-usager/v2/usagers/par-numero-francetravail",
+              "host": [
+                "{{api_base_url}}"
+              ],
+              "path": [
+                "rechercher-usager",
+                "v2",
+                "usagers",
+                "par-numero-francetravail"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"numeroFranceTravail\": \"{{recuperer-propositions-suspension-RSA-a-instruire_numeroFranceTravail}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Génération d’un jeton d’habilitation qui permettra au partenaire de consulter les données de sanctions par usager.  Cette étape doit être exécutée pour chaque usager retourné à l’étape précédente."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"jetonUsager is not null\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.jetonUsager).to.not.be.null;",
+                  "});",
+                  "",
+                  "// Persistance des outputs dans l'environnement Postman",
+                  "var jsonData = pm.response.json();",
+                  "pm.environment.set(\"forger-jeton-usager_jetonUsager\", jsonData.jetonUsager);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Consultation de la proposition de sanction",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "ft-jeton-usager",
+                "value": "$steps.forger-jeton-usager.output.jetonUsager",
+                "description": "Ce jeton permet d'appeler une API pour accéder aux données d'un usager. Il remplace l'identifiant national (idRci). \n\n Pour obtenir un jeton, il est nécessaire d'appeler au préalable l'API Rechercher usager.\n\n Attention, ce jeton est 'volatile' et a une durée de vie limitée (actuellement à une journée)."
+              },
+              {
+                "key": "pa-nom-agent",
+                "value": "Doe",
+                "description": "**Attribut obligatoire en mode Client Credentials**.<br>\nNom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch.\n",
+                "disabled": true
+              },
+              {
+                "key": "pa-prenom-agent",
+                "value": "John",
+                "description": "**Attribut obligatoire en mode Client Credentials.**<br>\nPrénom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch.\n",
+                "disabled": true
+              },
+              {
+                "key": "pa-identifiant-agent",
+                "value": "monidentifiant",
+                "description": "**Attribut obligatoire en mode Client Credentials.**<br>\nIdentifiant de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner \"BATCH\"\n",
+                "disabled": true
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{recuperer-access-token_accessToken}}",
+                "description": "Token d'authentification Bearer"
+              }
+            ],
+            "url": {
+              "raw": "{{api_base_url}}/gestion-sanctions-rsa/v1/detailManquement",
+              "host": [
+                "{{api_base_url}}"
+              ],
+              "path": [
+                "gestion-sanctions-rsa",
+                "v1",
+                "detailManquement"
+              ],
+              "query": [
+                {
+                  "key": "identifiantSanction",
+                  "value": "{{recuperer-propositions-suspension-RSA-a-instruire_identifiantConsequenceSanction}}",
+                  "description": "Identifiant unique de la conséquence de sanction récupéré via l'API 'Gestion Activités Opérationnelles'"
+                }
+              ]
+            },
+            "description": "Consultation de la proposition de sanction d'un usager. Cette étape doit être répétée pour chaque usager retourné à l’étape $steps.recuperer-propositions-suspension-RSA-a-instruire.stepId"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "// Persistance des outputs dans l'environnement Postman",
+                  "var jsonData = pm.response.json();",
+                  "pm.environment.set(\"consulter-proposition-sanction-usager_modaliteProposee\", jsonData.modaliteProposee);",
+                  "pm.environment.set(\"consulter-proposition-sanction-usager_montantPropose\", jsonData.montantPropose);",
+                  "pm.environment.set(\"consulter-proposition-sanction-usager_typeConsequenceSanction\", jsonData.typeConsequenceSanction);",
+                  "pm.environment.set(\"consulter-proposition-sanction-usager_dureeProposee\", jsonData.dureeProposee);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Instruction de la proposition de sanction",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "ft-jeton-usager",
+                "value": "{{forger-jeton-usager_jetonUsager}}",
+                "description": "Ce jeton permet d'appeler une API pour accéder aux données d'un usager. Il remplace l'identifiant national (idRci). \n\n Pour obtenir un jeton, il est nécessaire d'appeler au préalable l'API Rechercher usager.\n\n Attention, ce jeton est 'volatile' et a une durée de vie limitée (actuellement à une journée)."
+              },
+              {
+                "key": "pa-nom-agent",
+                "value": "Doe",
+                "description": "**Attribut obligatoire en mode Client Credentials**.<br>\nNom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch.\n",
+                "disabled": true
+              },
+              {
+                "key": "pa-prenom-agent",
+                "value": "John",
+                "description": "**Attribut obligatoire en mode Client Credentials.**<br>\nPrénom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch.\n",
+                "disabled": true
+              },
+              {
+                "key": "pa-identifiant-agent",
+                "value": "monidentifiant",
+                "description": "**Attribut obligatoire en mode Client Credentials.**<br>\nIdentifiant de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner \"BATCH\"\n",
+                "disabled": true
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{recuperer-access-token_accessToken}}",
+                "description": "Token d'authentification Bearer"
+              }
+            ],
+            "url": {
+              "raw": "{{api_base_url}}/gestion-sanctions-rsa/v1/evenementSanctionRSA",
+              "host": [
+                "{{api_base_url}}"
+              ],
+              "path": [
+                "gestion-sanctions-rsa",
+                "v1",
+                "evenementSanctionRSA"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifiantConsequenceSanction\": \"{{recuperer-propositions-suspension-RSA-a-instruire_identifiantConsequenceSanction}}\",\n  \"evenement.typeEvenement\": \"SAISIE_SANCTION\",\n  \"evenement.dateEvenement\": \"date_format_YYYY-MM-dd\",\n  \"typeConsequenceSanctionValide\": \"{{consulter-proposition-sanction-usager_typeConsequenceSanction}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Instruire la proposition de sanction d'un usager.  Cette étape doit être répétée pour chaque usager retourné à l’étape $steps.recuperer-propositions-suspension-RSA-a-instruire.stepId. Ici on saisit (i.e. on indique qu'on instruit) la sanction proposée (SAISIE_SANCTION).  Mais il est aussi possible de refuser l'instruction (REFUS_SAISIE_SANCTION). Attention REFUS_SAISIE_SANCTION signifie que la sanction est validée telle que préconisée par FranceTravail."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"codeSortie equals C001\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.codeSortie).to.eql(\"C001\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Validation de la suspension RSA",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "ft-jeton-usager",
+                "value": "{{forger-jeton-usager_jetonUsager}}",
+                "description": "Ce jeton permet d'appeler une API pour accéder aux données d'un usager. Il remplace l'identifiant national (idRci). \n\n Pour obtenir un jeton, il est nécessaire d'appeler au préalable l'API Rechercher usager.\n\n Attention, ce jeton est 'volatile' et a une durée de vie limitée (actuellement à une journée)."
+              },
+              {
+                "key": "pa-nom-agent",
+                "value": "Doe",
+                "description": "**Attribut obligatoire en mode Client Credentials**.<br>\nNom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch.\n",
+                "disabled": true
+              },
+              {
+                "key": "pa-prenom-agent",
+                "value": "John",
+                "description": "**Attribut obligatoire en mode Client Credentials.**<br>\nPrénom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch.\n",
+                "disabled": true
+              },
+              {
+                "key": "pa-identifiant-agent",
+                "value": "monidentifiant",
+                "description": "**Attribut obligatoire en mode Client Credentials.**<br>\nIdentifiant de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner \"BATCH\"\n",
+                "disabled": true
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{recuperer-access-token_accessToken}}",
+                "description": "Token d'authentification Bearer"
+              }
+            ],
+            "url": {
+              "raw": "{{api_base_url}}/gestion-sanctions-rsa/v1/evenementSanctionRSA",
+              "host": [
+                "{{api_base_url}}"
+              ],
+              "path": [
+                "gestion-sanctions-rsa",
+                "v1",
+                "evenementSanctionRSA"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifiantConsequenceSanction\": \"{{recuperer-propositions-suspension-RSA-a-instruire_identifiantConsequenceSanction}}\",\n  \"evenement.typeEvenement\": \"VALID_SANCTION\",\n  \"evenement.dateEvenement\": \"date_format_YYYY-MM-dd\",\n  \"typeConsequenceSanctionValide\": \"{{consulter-proposition-sanction-usager_typeConsequenceSanction}}\",\n  \"modaliteDecisionValidee\": \"{{consulter-proposition-sanction-usager_modaliteProposee}}\",\n  \"montantValide\": \"{{consulter-proposition-sanction-usager_montantPropose}}\",\n  \"dureeValidee\": \"{{consulter-proposition-sanction-usager_dureeProposee}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Valider la proposition de sanction d’un usager. Cette étape doit être répétée pour chaque usager retourné à l’étape $steps.recuperer-propositions-suspension-RSA-a-instruire.stepId. Ici on valide une proposition sanction (VALID_SANCTION), mais il est possible de la refuser (REFUS_SANCTION). Ici on choisit de conserver les modalités de sanction proposées par FranceTravail, mais il est possible de les adapter (modaliteDecisionValidee = M ou P; montantValide : en euros si modalité M ou un taux entre 30 et 100 si modalité P, dureeValidee : nombre de mois entre 1 et 4)"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"codeSortie equals C001\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.codeSortie).to.eql(\"C001\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ],
+      "description": "Ce workflow décrit comment un partenaire confirme une proposition de suspension de RSA.   France Travail, en tant que référent d'accompagnement d'un usager bRSA, effectue les contrôles de respect des engagements et peut être amené à transmettre des propositions de sanction pour cet usager en cas de manquement. Le partenaire a alors la responsabilité de confirmer ou d'infirmer la proposition de sanction.  Ce workflow décrit un cas de proposition de suspension de RSA, il est à noter que le workflow est quasi identique pour une proposition de suppression de RSA (sans l'étape d'instruction et au paramétrage près)."
+    },
+    {
+      "name": "Valider une proposition de suppression de RSA pour un bRSA accompagné par FT",
+      "item": [
+        {
+          "name": "Récupération du token d'accès",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{auth_base_url}}/connexion/oauth2/access_token",
+              "host": [
+                "{{auth_base_url}}"
+              ],
+              "path": [
+                "connexion",
+                "oauth2",
+                "access_token"
+              ]
+            },
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "grant_type",
+                  "value": "client_credentials",
+                  "type": "text"
+                },
+                {
+                  "key": "client_id",
+                  "value": "{{client_id}}",
+                  "type": "text"
+                },
+                {
+                  "key": "client_secret",
+                  "value": "{{client_secret}}",
+                  "type": "text"
+                },
+                {
+                  "key": "scope",
+                  "value": "{{scopes}}",
+                  "type": "text"
+                }
+              ]
+            },
+            "description": "Récupération d'un access token avec les scopes adéquats\n\n*(step inliné depuis le workflow `wf-authentification`)*"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"access_token is not null\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.access_token).to.not.be.null;",
+                  "});",
+                  "",
+                  "// Persistance des outputs dans l'environnement Postman",
+                  "var jsonData = pm.response.json();",
+                  "pm.environment.set(\"recuperer-access-token_accessToken\", jsonData.access_token);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Récupération des propositions de suppression RSA",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "pa-nom-agent",
+                "value": "{{pa-nom-agent}}",
+                "description": "**Attribut obligatoire en mode Client Credentials.**\n\n.Nom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.\n\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch.",
+                "disabled": true
+              },
+              {
+                "key": "pa-prenom-agent",
+                "value": "{{pa-prenom-agent}}",
+                "description": "**Attribut obligatoire en mode Client Credentials.**\n\n.Prénom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.\n\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch.",
+                "disabled": true
+              },
+              {
+                "key": "pa-identifiant-agent",
+                "value": "{{pa-identifiant-agent}}",
+                "description": "**Attribut obligatoire en mode Client Credentials.**\n\nIdentifiant de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.\n\nDans le cadre d'un appel depuis un traitement de type batch, renseigner \"BATCH\"",
+                "disabled": true
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{recuperer-access-token_accessToken}}",
+                "description": "Token d'authentification Bearer"
+              }
+            ],
+            "url": {
+              "raw": "{{api_base_url}}/activites-operationnelles/v2/activites/chercher",
+              "host": [
+                "{{api_base_url}}"
+              ],
+              "path": [
+                "activites-operationnelles",
+                "v2",
+                "activites",
+                "chercher"
+              ],
+              "query": [
+                {
+                  "key": "codeActivite",
+                  "value": "ACT370",
+                  "description": "Code de l'activité. String de caractères alphanumériques en majuscules."
+                },
+                {
+                  "key": "codeDomaine",
+                  "value": "{{codeDomaine}}",
+                  "description": "Code du domaine. String de 3 caractères alphabétiques en majuscules.",
+                  "disabled": true
+                },
+                {
+                  "key": "codeFamille",
+                  "value": "{{codeFamille}}",
+                  "description": "Code de la famille. String de caractères alphanumériques en majuscules.",
+                  "disabled": true
+                },
+                {
+                  "key": "cursor",
+                  "value": "{{cursor}}",
+                  "description": "Curseur du dernier appel. Permet de lire la suite de la liste en enrichissant ce paramètre et en laissant les paramètres du dernier appel",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Récupération de la liste des propositions de suppression à traiter"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"activites[0].usager[0].typeIdentifiant equals numeroFranceTravail\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.activites[0].usager[0].typeIdentifiant).to.eql(\"numeroFranceTravail\");",
+                  "});",
+                  "pm.test(\"activites[0].attributsSpecifiques[0].nom equals identifiantConsequenceSanction\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.activites[0].attributsSpecifiques[0].nom).to.eql(\"identifiantConsequenceSanction\");",
+                  "});",
+                  "",
+                  "// Persistance des outputs dans l'environnement Postman",
+                  "var jsonData = pm.response.json();",
+                  "pm.environment.set(\"recuperer-propositions-suppression-RSA-a-traiter_numeroFranceTravail\", jsonData.activites[0].usager[0].identifiant);",
+                  "pm.environment.set(\"recuperer-propositions-suppression-RSA-a-traiter_identifiantConsequenceSanction\", jsonData.activites[0].attributsSpecifiques[0].valeur);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Génération du jeton usager",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "pa-nom-agent",
+                "value": "Martin",
+                "description": "**Attribut obligatoire en mode Client Credentials**.\r\n\r\n Nom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.\r\n\r\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch."
+              },
+              {
+                "key": "pa-prenom-agent",
+                "value": "Henri",
+                "description": "**Attribut obligatoire en mode Client Credentials**.\r\n\r\n Prénom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.\r\n\r\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch."
+              },
+              {
+                "key": "pa-identifiant-agent",
+                "value": "IdentifiantAgent",
+                "description": "**Attribut obligatoire en mode Client Credentials**.\r\n\r\n Identifiant de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.\r\n\r\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch."
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{{recuperer-access-token_accessToken}}",
+                "description": "Token d'authentification Bearer"
+              }
+            ],
+            "url": {
+              "raw": "{{api_base_url}}/rechercher-usager/v2/usagers/par-numero-francetravail",
+              "host": [
+                "{{api_base_url}}"
+              ],
+              "path": [
+                "rechercher-usager",
+                "v2",
+                "usagers",
+                "par-numero-francetravail"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"numeroFranceTravail\": \"{{recuperer-propositions-suspension-RSA-a-instruire_numeroFranceTravail}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Génération d'un jeton d'habilitation qui permettra au partenaire de consulter les données de sanctions par usager. Cette étape doit être exécutée pour chaque usager retourné à l'étape précédente."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"jetonUsager is not null\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.jetonUsager).to.not.be.null;",
+                  "});",
+                  "",
+                  "// Persistance des outputs dans l'environnement Postman",
+                  "var jsonData = pm.response.json();",
+                  "pm.environment.set(\"forger-jeton-usager_jetonUsager\", jsonData.jetonUsager);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Consultation de la proposition de suppression RSA",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "ft-jeton-usager",
+                "value": "$steps.forger-jeton-usager.output.jetonUsager",
+                "description": "Ce jeton permet d'appeler une API pour accéder aux données d'un usager. Il remplace l'identifiant national (idRci). \n\n Pour obtenir un jeton, il est nécessaire d'appeler au préalable l'API Rechercher usager.\n\n Attention, ce jeton est 'volatile' et a une durée de vie limitée (actuellement à une journée)."
+              },
+              {
+                "key": "pa-nom-agent",
+                "value": "Doe",
+                "description": "**Attribut obligatoire en mode Client Credentials**.<br>\nNom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch.\n",
+                "disabled": true
+              },
+              {
+                "key": "pa-prenom-agent",
+                "value": "John",
+                "description": "**Attribut obligatoire en mode Client Credentials.**<br>\nPrénom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch.\n",
+                "disabled": true
+              },
+              {
+                "key": "pa-identifiant-agent",
+                "value": "monidentifiant",
+                "description": "**Attribut obligatoire en mode Client Credentials.**<br>\nIdentifiant de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner \"BATCH\"\n",
+                "disabled": true
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{recuperer-access-token_accessToken}}",
+                "description": "Token d'authentification Bearer"
+              }
+            ],
+            "url": {
+              "raw": "{{api_base_url}}/gestion-sanctions-rsa/v1/detailManquement",
+              "host": [
+                "{{api_base_url}}"
+              ],
+              "path": [
+                "gestion-sanctions-rsa",
+                "v1",
+                "detailManquement"
+              ],
+              "query": [
+                {
+                  "key": "identifiantSanction",
+                  "value": "{{recuperer-propositions-suspension-RSA-a-instruire_identifiantConsequenceSanction}}",
+                  "description": "Identifiant unique de la conséquence de sanction récupéré via l'API 'Gestion Activités Opérationnelles'"
+                }
+              ]
+            },
+            "description": "Consultation de la proposition de sanction d'un usager. Cette étape doit être répétée pour chaque usager retourné à l'étape $steps.recuperer-propositions-suspension-RSA-a-instruire.stepId"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "// Persistance des outputs dans l'environnement Postman",
+                  "var jsonData = pm.response.json();",
+                  "pm.environment.set(\"consulter-proposition-suppression-RSA_modaliteProposee\", jsonData.modaliteProposee);",
+                  "pm.environment.set(\"consulter-proposition-suppression-RSA_montantPropose\", jsonData.montantPropose);",
+                  "pm.environment.set(\"consulter-proposition-suppression-RSA_typeConsequenceSanction\", jsonData.typeConsequenceSanction);",
+                  "pm.environment.set(\"consulter-proposition-suppression-RSA_dureeProposee\", jsonData.dureeProposee);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Validation de la suppression RSA",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "ft-jeton-usager",
+                "value": "{{forger-jeton-usager_jetonUsager}}",
+                "description": "Ce jeton permet d'appeler une API pour accéder aux données d'un usager. Il remplace l'identifiant national (idRci). \n\n Pour obtenir un jeton, il est nécessaire d'appeler au préalable l'API Rechercher usager.\n\n Attention, ce jeton est 'volatile' et a une durée de vie limitée (actuellement à une journée)."
+              },
+              {
+                "key": "pa-nom-agent",
+                "value": "Doe",
+                "description": "**Attribut obligatoire en mode Client Credentials**.<br>\nNom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch.\n",
+                "disabled": true
+              },
+              {
+                "key": "pa-prenom-agent",
+                "value": "John",
+                "description": "**Attribut obligatoire en mode Client Credentials.**<br>\nPrénom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch.\n",
+                "disabled": true
+              },
+              {
+                "key": "pa-identifiant-agent",
+                "value": "monidentifiant",
+                "description": "**Attribut obligatoire en mode Client Credentials.**<br>\nIdentifiant de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner \"BATCH\"\n",
+                "disabled": true
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{recuperer-access-token_accessToken}}",
+                "description": "Token d'authentification Bearer"
+              }
+            ],
+            "url": {
+              "raw": "{{api_base_url}}/gestion-sanctions-rsa/v1/evenementSanctionRSA",
+              "host": [
+                "{{api_base_url}}"
+              ],
+              "path": [
+                "gestion-sanctions-rsa",
+                "v1",
+                "evenementSanctionRSA"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifiantConsequenceSanction\": \"$steps.recuperer-p\",\n  \"evenement.typeEvenement\": \"VALID_SANCTION\",\n  \"evenement.dateEvenement\": \"date_format_YYYY-MM-dd\",\n  \"typeConsequenceSanctionValide\": \"{{consulter-proposition-sanction-usager_typeConsequenceSanction}}\",\n  \"modaliteDecisionValidee\": \"{{consulter-proposition-sanction-usager_modaliteProposee}}\",\n  \"montantValide\": \"{{consulter-proposition-sanction-usager_montantPropose}}\",\n  \"dureeValidee\": \"{{consulter-proposition-sanction-usager_dureeProposee}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Valider la proposition de sanction d'un usager. Cette étape doit être répétée pour chaque usager retourné à l'étape $steps.recuperer-propositions-suspension-RSA-a-instruire.stepId. Ici on valide une proposition sanction (VALID_SANCTION), mais il est possible de la refuser (REFUS_SANCTION). Ici on choisit de conserver les modalités de sanction proposées par FranceTravail, mais il est possible de les modifier (modaliteDecisionValidee = M ou P; montantValide : en euros si modalité M ou un taux entre 30 et 100 si modalité P, dureeValidee : nombre de mois entre 1 et 4)"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"codeSortie equals C001\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.codeSortie).to.eql(\"C001\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ],
+      "description": "Ce workflow décrit comment un partenaire confirme une proposition de suppression de RSA initiée par France Travail. France Travail, en tant que référent d'accompagnement d'un usager bRSA, effectue les contrôles de respect des engagements et peut être amené à transmettre des propositions de sanction pour cet usager en cas de manquement. Le partenaire a alors la responsabilité de confirmer ou d'infirmer la proposition de sanction. Ce workflow décrit un cas de proposition de suppression de RSA. A noter qu'il est quasi identique au workflow pour une levée de suspension RSA, au paramétrage près (codeActivite : ACT369, typeEvenement : VALID_LEVEE_SUSP ou REFUS_LEVEE_SUSP)."
+    },
+    {
+      "name": "Transmettre une demande de radiation d'un usager",
+      "item": [
+        {
+          "name": "Récupération du token d'accès",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{auth_base_url}}/connexion/oauth2/access_token",
+              "host": [
+                "{{auth_base_url}}"
+              ],
+              "path": [
+                "connexion",
+                "oauth2",
+                "access_token"
+              ]
+            },
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "grant_type",
+                  "value": "client_credentials",
+                  "type": "text"
+                },
+                {
+                  "key": "client_id",
+                  "value": "{{client_id}}",
+                  "type": "text"
+                },
+                {
+                  "key": "client_secret",
+                  "value": "{{client_secret}}",
+                  "type": "text"
+                },
+                {
+                  "key": "scope",
+                  "value": "{{scopes}}",
+                  "type": "text"
+                }
+              ]
+            },
+            "description": "Récupération d'un access token avec les scopes adéquats\n\n*(step inliné depuis le workflow `wf-authentification`)*"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"access_token is not null\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.access_token).to.not.be.null;",
+                  "});",
+                  "",
+                  "// Persistance des outputs dans l'environnement Postman",
+                  "var jsonData = pm.response.json();",
+                  "pm.environment.set(\"recuperer-access-token_accessToken\", jsonData.access_token);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Génération du jeton usager",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "pa-nom-agent",
+                "value": "Martin",
+                "description": "**Attribut obligatoire en mode Client Credentials**.\r\n\r\n Nom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.\r\n\r\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch."
+              },
+              {
+                "key": "pa-prenom-agent",
+                "value": "Henri",
+                "description": "**Attribut obligatoire en mode Client Credentials**.\r\n\r\n Prénom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.\r\n\r\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch."
+              },
+              {
+                "key": "pa-identifiant-agent",
+                "value": "IdentifiantAgent",
+                "description": "**Attribut obligatoire en mode Client Credentials**.\r\n\r\n Identifiant de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.\r\n\r\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch."
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{{recuperer-access-token_accessToken}}",
+                "description": "Token d'authentification Bearer"
+              }
+            ],
+            "url": {
+              "raw": "{{api_base_url}}/rechercher-usager/v2/usagers/par-numero-francetravail",
+              "host": [
+                "{{api_base_url}}"
+              ],
+              "path": [
+                "rechercher-usager",
+                "v2",
+                "usagers",
+                "par-numero-francetravail"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"numeroFranceTravail\": \"{{recuperer-propositions-suspension-RSA-a-instruire_numeroFranceTravail}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Génération d’un jeton d’habilitation qui permettra au partenaire de consulter les données de sanctions par usager.  Cette étape doit être exécutée pour chaque usager retourné à l’étape précédente."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"jetonUsager is not null\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.jetonUsager).to.not.be.null;",
+                  "});",
+                  "",
+                  "// Persistance des outputs dans l'environnement Postman",
+                  "var jsonData = pm.response.json();",
+                  "pm.environment.set(\"forger-jeton-usager_jetonUsager\", jsonData.jetonUsager);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Transmission de la décision de sanction",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "ft-jeton-usager",
+                "value": "{{forger-jeton-usager_jetonUsager}}",
+                "description": "Ce jeton permet d'appeler une API pour accéder aux données d'un usager. Il remplace l'identifiant national (idRci). \n\n Pour obtenir un jeton, il est nécessaire d'appeler au préalable l'API Rechercher usager.\n\n Attention, ce jeton est 'volatile' et a une durée de vie limitée (actuellement à une journée)."
+              },
+              {
+                "key": "pa-nom-agent",
+                "value": "Doe",
+                "description": "**Attribut obligatoire en mode Client Credentials**.<br>\nNom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch.\n",
+                "disabled": true
+              },
+              {
+                "key": "pa-prenom-agent",
+                "value": "John",
+                "description": "**Attribut obligatoire en mode Client Credentials.**<br>\nPrénom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch.\n",
+                "disabled": true
+              },
+              {
+                "key": "pa-identifiant-agent",
+                "value": "monidentifiant",
+                "description": "**Attribut obligatoire en mode Client Credentials.**<br>\nIdentifiant de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner \"BATCH\"\n",
+                "disabled": true
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{recuperer-access-token_accessToken}}",
+                "description": "Token d'authentification Bearer"
+              }
+            ],
+            "url": {
+              "raw": "{{api_base_url}}/gestion-sanctions-rsa/v1/decisionSanctionRSAPartenaire",
+              "host": [
+                "{{api_base_url}}"
+              ],
+              "path": [
+                "gestion-sanctions-rsa",
+                "v1",
+                "decisionSanctionRSAPartenaire"
+              ]
+            },
+            "description": "Transmettre la décision de sanction d'un usager. Etape facultative à réaliser si le partenaire est à l'origine de la proposition de sanction (et pas France Travail)"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"codeSortie equals C001\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.codeSortie).to.eql(\"C001\");",
+                  "});",
+                  "",
+                  "// Persistance des outputs dans l'environnement Postman",
+                  "var jsonData = pm.response.json();",
+                  "pm.environment.set(\"transmettre-decision-sanction-usager_identifiantConsequenceSanction\", jsonData.identifiantConsequenceSanction);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Vérification de la décision de sanction",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "ft-jeton-usager",
+                "value": "$steps.forger-jeton-usager.output.jetonUsager",
+                "description": "Ce jeton permet d'appeler une API pour accéder aux données d'un usager. Il remplace l'identifiant national (idRci). \n\n Pour obtenir un jeton, il est nécessaire d'appeler au préalable l'API Rechercher usager.\n\n Attention, ce jeton est 'volatile' et a une durée de vie limitée (actuellement à une journée)."
+              },
+              {
+                "key": "pa-nom-agent",
+                "value": "Doe",
+                "description": "**Attribut obligatoire en mode Client Credentials**.<br>\nNom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch.\n",
+                "disabled": true
+              },
+              {
+                "key": "pa-prenom-agent",
+                "value": "John",
+                "description": "**Attribut obligatoire en mode Client Credentials.**<br>\nPrénom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch.\n",
+                "disabled": true
+              },
+              {
+                "key": "pa-identifiant-agent",
+                "value": "monidentifiant",
+                "description": "**Attribut obligatoire en mode Client Credentials.**<br>\nIdentifiant de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner \"BATCH\"\n",
+                "disabled": true
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{recuperer-access-token_accessToken}}",
+                "description": "Token d'authentification Bearer"
+              }
+            ],
+            "url": {
+              "raw": "{{api_base_url}}/gestion-sanctions-rsa/v1/detailManquement",
+              "host": [
+                "{{api_base_url}}"
+              ],
+              "path": [
+                "gestion-sanctions-rsa",
+                "v1",
+                "detailManquement"
+              ],
+              "query": [
+                {
+                  "key": "identifiantSanction",
+                  "value": "{{transmettre-decision-sanction-usager_identifiantConsequenceSanction}}",
+                  "description": "Identifiant unique de la conséquence de sanction récupéré via l'API 'Gestion Activités Opérationnelles'"
+                }
+              ]
+            },
+            "description": "Vérifier la prise en compte de la décision de sanction"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Transmission de la demande de radiation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "ft-jeton-usager",
+                "value": "$steps.forger-jeton-usager.output.jetonUsager",
+                "description": "Ce jeton permet d'appeler une API pour accéder aux données d'un usager. Il remplace l'identifiant national (idRci). \n\n Pour obtenir un jeton, il est nécessaire d'appeler au préalable l'API Rechercher usager.\n\n Attention, ce jeton est 'volatile' et a une durée de vie limitée (actuellement à une journée)."
+              },
+              {
+                "key": "pa-nom-agent",
+                "value": "Doe",
+                "description": "**Attribut obligatoire en mode Client Credentials**.<br>\nNom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch.\n",
+                "disabled": true
+              },
+              {
+                "key": "pa-prenom-agent",
+                "value": "John",
+                "description": "**Attribut obligatoire en mode Client Credentials.**<br>\nPrénom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch.\n",
+                "disabled": true
+              },
+              {
+                "key": "pa-identifiant-agent",
+                "value": "monidentifiant",
+                "description": "**Attribut obligatoire en mode Client Credentials.**<br>\nIdentifiant de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner \"BATCH\"\n",
+                "disabled": true
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{recuperer-access-token_accessToken}}",
+                "description": "Token d'authentification Bearer"
+              }
+            ],
+            "url": {
+              "raw": "{{api_base_url}}/gestion-sanctions-rsa/v1/demandeRadiation",
+              "host": [
+                "{{api_base_url}}"
+              ],
+              "path": [
+                "gestion-sanctions-rsa",
+                "v1",
+                "demandeRadiation"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifiantConsequenceSanction\": \"{{transmettre-decision-sanction-usager_identifiantConsequenceSanction}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Transmettre la demande de radiation des demandeurs d'emploi pour un usager bénéficiaire du RSA non accompagné par FT"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ],
+      "description": "Ce workflow décrit comment un partenaire partage une décision de sanction RSA prise pour un usager qu'il accompagne, si la décision légitime une demande de radiation de la liste des demandeurs d'emploi.  Dans ce cas ce n'est pas Francetravail qui est à l'origine de la proposition de sanction, mais le partenaire. Ce workflow est toutefois adaptable pour un cas de demande de radiation faisant suite à une décision prise pour un bRSA accompagné par France Travail : on n'effectue pas l'étape de transmission de la décision, et on indique à l'étape de demande de radiation l'identifiant de la sanction qui a été validée suite à une proposition de sanction émise par France Travail."
+    }
+  ]
+}
