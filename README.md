@@ -12,8 +12,8 @@ Commencez par votre métier :
 
 | Le job | Pour qui | État | Entrée |
 |---|---|---|---|
-| 🚢 Orienter un allocataire RSA vers le bon accompagnement | Conseil départemental | `pilote` | [→ ouvrir](./cas_d_usage/orientation-allocataire-rsa/) |
-| ⏳ Inscrire un jeune dans un parcours d'accompagnement | Mission locale | `bientôt` | — |
+| 🚢 Gérer les sanctions d'un allocataire RSA | Conseil départemental | `pilote` | [→ ouvrir](./cas_d_usage/sanction/) |
+| ⏳ Orienter un allocation RSA vers le bon accompagnement | Conseil départemental | `bientôt` | — |
 
 > 🧱 **Les API unitaires** (contrats, référence) sont documentées sur le catalogue officiel : **[francetravail.io](https://francetravail.io)**. Ici, on ne duplique pas les briques — on montre comment les monter.
 
