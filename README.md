@@ -1,54 +1,55 @@
-# 🚀 SI Plateforme – Guide d’onboarding
- 
-Bienvenue sur l’espace **SI Plateforme** 👋  
-Ce repository est le **point d’entrée** pour découvrir et expérimenter les **parcours d’API** et les **kits d’appropriation** du SI Plateforme de France Travail.
+# Vous avez un job à faire. On vous montre le montage complet.
 
-Que vous soyez :
-- consommateur d’API,
-- producteur de services,
-- partenaire de l’écosystème du réseau pour l'emploi.
- 
+Bienvenue sur l'espace d'intégration partenaires de la **plateforme France Travail**.
+
+Chaque cas d'usage est livré comme un **parcours mis en scène de bout en bout** : le processus métier expliqué, l'orchestration prête à l'emploi ([Arazzo](https://spec.openapis.org/arazzo/latest.html)), une collection Postman à rejouer et des exemples de code. Pas une liste d'API à assembler soi-même.
+
 ---
- 
-## 🎯 À quoi sert cet espace ?
- 
-- 📖 Comprendre les **parcours d’API** de bout en bout  
-- 🧪 **Tester rapidement** les API sans développement lourd  
-- 🧰 S’approprier les **bonnes pratiques SI Plateforme**
- 
+
+## 🚢 Les cas d'usage
+
+Commencez par votre métier :
+
+| Le job | Pour qui | État | Entrée |
+|---|---|---|---|
+| 🚢 Orienter un allocataire RSA vers le bon accompagnement | Conseil départemental | `pilote` | [→ ouvrir](./cas_d_usage/orientation-allocataire-rsa/) |
+| ⏳ Inscrire un jeune dans un parcours d'accompagnement | Mission locale | `bientôt` | — |
+
+> 🧱 **Les API unitaires** (contrats, référence) sont documentées sur le catalogue officiel : **[francetravail.io](https://francetravail.io)**. Ici, on ne duplique pas les briques — on montre comment les monter.
+
 ---
- 
-## 🧪 Démarrer avec le parcours *Loi Pour l’Emploi (LPE)*
- 
-Ce repository propose une **expérimentation pilote** autour du parcours **Loi Pour l’Emploi**, utilisée comme **référence d’onboarding**.
- 
-Vous y trouverez :
-- 🔄 une [cinématique d’implémentation](https://github.com/France-Travail/si_plateforme/tree/main/parcours_Loi_Pour_l_Emploi/schemas_et_cinematique_LPE)  
-  → pour comprendre l’enchaînement des API et la logique du parcours
-- 🧪 [une collection Postman prête à l’emploi](https://github.com/France-Travail/si_plateforme/tree/main/parcours_Loi_Pour_l_Emploi/collection_postman_LPE)  
-  → pour tester et expérimenter les API rapidement
-- 🧪 [des exemple de code en java](https://github.com/France-Travail/si_plateforme/tree/main/parcours_Loi_Pour_l_Emploi/bonnes_pratiques_et_exemples_de_code)  
-  → pour illustrer quelques bonnes pratiques et expérimentations autour de la consommation d'APIs
- 
+
+## Comment lire cet espace
+
+| Symbole | Signification |
+|---|---|
+| 🚢 | **Cas d'usage** — un parcours métier complet, mis en scène. Commencez ici. |
+| 🧱 | **Brique** — un contrat d'API unitaire, documenté sur [francetravail.io](https://francetravail.io). |
+| ⏳ | **Bientôt** — en cours de mise en scène, pas encore publié. |
+
+Chaque dossier de cas d'usage est un **îlot autonome** : tout ce qu'il faut pour comprendre, rejouer et intégrer le parcours est à l'intérieur.
+
 ---
- 
-## 🧭 Comment commencer ?
- 
-1. Parcourez la **cinématique d’implémentation**
-2. Testez les API avec la **collection Postman**
-3. Appuyez-vous sur les **kits d’appropriation**
- 
+
+## Structure du dépôt
+
+```
+cas_d_usage/          les parcours partenaires (1 dossier = 1 cas d'usage)
+  _template/          le gabarit pour créer un nouveau cas d'usage
+transverse/           ce qui sert tous les parcours (onboarding, accès, glossaire)
+```
+
+## Poser une question
+
+Ouvrez une [issue](../../issues) en précisant le cas d'usage concerné dans le titre : `[rsa] Ma question`.
+
 ---
- 
-## 🤝 Un espace vivant
- 
-Ce repository évolue :
-- de nouveaux parcours seront ajoutés,
-- les contenus s’enrichissent avec les retours d’usage.
- 
-👉 Contributions, questions et feedbacks sont bienvenus via les **issues** et **pull requests**.
- 
----
- 
-> Le SI Plateforme s’approprie par l’expérimentation.  
-Bonne exploration 🚀
+
+## Règles de l'espace (pour les contributeurs)
+
+1. **1 dossier = 1 cas d'usage partenaire**, nommé en langage métier (`orientation-allocataire-rsa`), jamais en langage API.
+2. **N'entre au rayon que ce qui est mis en scène** : un cas d'usage est publié dans le tableau ci-dessus uniquement quand sa photo (README), sa notice (Arazzo) et son rejouable (Postman) existent.
+3. **Les briques restent au magasin** : aucun contrat OpenAPI n'est dupliqué ici — on référence [francetravail.io](https://francetravail.io) en épinglant les versions validées.
+4. **Nouveau cas d'usage** : copier [`cas_d_usage/_template/`](./cas_d_usage/_template/), suivre son README.
+
+_Espace en construction — 1 parcours publié, d'autres arrivent._

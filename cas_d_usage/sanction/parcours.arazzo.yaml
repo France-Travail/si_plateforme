@@ -1,0 +1,434 @@
+arazzo: 1.0.1
+
+info:
+  title: Loi Plein Emploi – parcours fonctionnels autour des sanctions
+  summary: Workflows fonctionnels API LPE Sanctions
+  description: >
+    Workflows fonctionnels décrivant les principales cinématiques
+    autour des sanctions dans le cadre de la Loi Plein Emploi.
+  version: 1.0.0
+
+sourceDescriptions:
+  - name: FranceTravailAuthCC
+    url: ./access_token_CC_openapi.yaml
+    type: openapi
+  - name: rechercheUsager
+    # url: https://francetravail.io/api-peio/v2/api/465/openapi
+    url: file://API_LPE_RechercheUsager_openapi.json
+    type: openapi
+  - name: activitesOperationnelles
+    # url: https://francetravail.io/api-peio/v2/api/434/openapi
+    url: file://API_LPE_ActivitesOperationnelles_v2_openapi.json
+    type: openapi
+  - name: sanctionRSA
+    url: file://API_LPE_SanctionsRSA_v1.1_openapi.json
+    type: openapi
+
+workflows:
+  - workflowId: wf-authentification
+    summary:  processus d'authentification commun à plusieurs workflows
+    description: Ce workflow décrit le processus d'authentification machine to machine (Client Credentials flow)
+    inputs:
+      type: object
+      properties:
+        client_id:
+          type: string
+        client_secret:
+          type: string
+        scopes:
+          type: string
+      required: [client_id, client_secret, scopes]
+    steps:
+      - stepId: recuperer-access-token
+        operationId: $sourceDescriptions.FranceTravailAuthCC.getAccessToken
+        description: >
+          Récupération d'un access token avec les scopes adéquats
+        requestBody:
+          contentType: application/x-www-form-urlencoded
+          payload:
+            grant_type: client_credentials
+            client_id: $inputs.client_id
+            client_secret: $inputs.client_secret
+            scope: $inputs.scopes
+        successCriteria:
+          - condition: $statusCode == 200
+          - condition: $response.body.access_token != null
+        outputs:
+          accessToken: $response.body.access_token
+        onFailure:
+          - name: handleValidationError
+            type: end
+            criteria:
+              - condition: $statusCode == 400
+            outputs:
+              error: $response.body.error
+              errorCode: invalid_client
+  - workflowId: wf-confirmer-proposition-suspension-RSA
+    summary:  Valider une proposition de suspension de RSA pour un bRSA accompagné par FT
+    description: >
+      Ce workflow décrit comment un partenaire confirme une proposition de suspension de RSA.  
+      France Travail, en tant que référent d'accompagnement d'un usager bRSA, effectue les contrôles de respect des engagements et peut être amené à transmettre des propositions de sanction pour cet usager en cas de manquement. Le partenaire a alors la responsabilité de confirmer ou d'infirmer la proposition de sanction. 
+      Ce workflow décrit un cas de proposition de suspension de RSA, il est à noter que le workflow est quasi identique pour une proposition de suppression de RSA (sans l'étape d'instruction et au paramétrage près).
+    inputs:
+      type: object
+      properties:
+        client_id:
+          type: string
+        client_secret:
+          type: string
+      required: [client_id, client_secret]
+    steps:
+      - stepId: recuperer-access-token
+        workflowId: wf-authentification
+        inputs:
+          client_id: $inputs.client_id
+          client_secret: $inputs.client_secret
+          scopes: profil_accedant  api_rechercher-usagerv2 rechercheusager api_activites-operationnellesv2 activitesCD api_gestion-sanctions-rsav1 gestiondesmanquements
+      - stepId: recuperer-propositions-suspension-RSA-a-instruire
+        outputs:
+          accessToken: $response.body.access_token
+          description:  Récupération de la liste des propositions de suspension RSA à instruire. A noter qu'ici seules les sanctions de type suspension RSA sont remontées (codeActivite=ACT366), mais il est possible de récupérer toutes les activités autour des sanctions via le codeFamille GLI100.
+        operationId: $sourceDescriptions.activitesOperationnelles.getListActivites
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer $steps.recuperer-access-token.outputs.accessToken"
+          - name: codeActivite
+            in: query
+            value: ACT366
+        successCriteria:
+          - condition: $statusCode == 200
+          - condition: $response.body.activites[0].usager[0].typeIdentifiant == "numeroFranceTravail"
+          - condition: $response.body.activites[0].attributsSpecifiques[0].nom == "identifiantConsequenceSanction"
+        outputs:
+          numeroFranceTravail: $response.body.activites[0].usager[0].identifiant
+          identifiantConsequenceSanction: $response.body.activites[0].attributsSpecifiques[0].valeur
+        onSuccess:
+          - name: propositionsSanctionTrouvees
+            type: goto
+            stepId: forger-jeton-usager
+            criteria:
+              - condition: $response.body.activites.length > 0
+          - name:  pasDePropositionsSanction
+            type: end
+            criteria:
+              - condition: $response.body.activites.length == 0
+      - stepId: forger-jeton-usager
+        description: >
+          Génération d’un jeton d’habilitation qui permettra au partenaire de consulter les données de sanctions par usager. 
+          Cette étape doit être exécutée pour chaque usager retourné à l’étape précédente.
+        operationId: $sourceDescriptions.rechercheUsager.RechercherUsagerParNumeroFranceTravail
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer {$steps.recuperer-access-token.outputs.accessToken}"
+        requestBody:
+          application/json:
+            numeroFranceTravail: $steps.recuperer-propositions-suspension-RSA-a-instruire.outputs.numeroFranceTravail
+        successCriteria:
+          - condition: $statusCode == 200
+          - condition: $response.body.jetonUsager != null
+        outputs:
+          jetonUsager: $response.body.jetonUsager
+        onFailure:
+          - name: usagerNonRattache
+            type: goto
+            stepId: recuperer-propositions-suspension-RSA-a-instruire
+            criteria:
+              - condition: $statusCode == 403
+              - condition: $response.body.codeRetour == "R002"
+      - stepId: consulter-proposition-sanction-usager
+        description: "Consultation de la proposition de sanction d'un usager. Cette étape doit être répétée pour chaque usager retourné à l’étape $steps.recuperer-propositions-suspension-RSA-a-instruire.stepId"
+        operationId: $sourceDescriptions.sanctionRSA.lireDetailSanctionRsa
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer $steps.recuperer-access-token.outputs.accessToken"
+          - name: ft-jeton-usager
+            in: header
+            description: Jeton usager obtenu à l'étape précédente et requis pour exécuter cette étape du workflow
+            value: $steps.forger-jeton-usager.output.jetonUsager
+          - name: identifiantSanction
+            in: query
+            value: $steps.recuperer-propositions-suspension-RSA-a-instruire.outputs.identifiantConsequenceSanction
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          modaliteProposee: $response.body.modaliteProposee
+          montantPropose: $response.body.montantPropose
+          typeConsequenceSanction: $response.body.typeConsequenceSanction
+          dureeProposee: $response.body.dureeProposee
+      - stepId: instruire-proposition-sanction-usager
+        description: >
+          Instruire la proposition de sanction d'un usager. 
+          Cette étape doit être répétée pour chaque usager retourné à l’étape $steps.recuperer-propositions-suspension-RSA-a-instruire.stepId.
+          Ici on saisit (i.e. on indique qu'on instruit) la sanction proposée (SAISIE_SANCTION). 
+          Mais il est aussi possible de refuser l'instruction (REFUS_SAISIE_SANCTION). Attention REFUS_SAISIE_SANCTION signifie que la sanction est validée telle que préconisée par FranceTravail.
+        operationId: $sourceDescriptions.sanctionRSA.traiterSanctionRsa
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer $steps.recuperer-access-token.outputs.accessToken"
+          - name: ft-jeton-usager
+            in: header
+            description: Jeton usager obtenu à l'étape précédente et requis pour exécuter cette étape du workflow
+            value: $steps.forger-jeton-usager.outputs.jetonUsager
+        requestBody:
+          contentType: application/json
+          payload:
+            identifiantConsequenceSanction: $steps.recuperer-propositions-suspension-RSA-a-instruire.outputs.identifiantConsequenceSanction
+            evenement.typeEvenement: SAISIE_SANCTION
+            evenement.dateEvenement: date_format_YYYY-MM-dd
+            typeConsequenceSanctionValide: $steps.consulter-proposition-sanction-usager.outputs.typeConsequenceSanction
+        successCriteria:
+          - condition: $statusCode == 200
+          - condition: $response.body.codeSortie == "C001"
+      - stepId: valider-suspension-RSA
+        description: >
+          Valider la proposition de sanction d’un usager.
+          Cette étape doit être répétée pour chaque usager retourné à l’étape $steps.recuperer-propositions-suspension-RSA-a-instruire.stepId.
+          Ici on valide une proposition sanction (VALID_SANCTION), mais il est possible de la refuser (REFUS_SANCTION).
+          Ici on choisit de conserver les modalités de sanction proposées par FranceTravail, mais il est possible de les adapter (modaliteDecisionValidee = M ou P; montantValide : en euros si modalité M ou un taux entre 30 et 100 si modalité P, dureeValidee : nombre de mois entre 1 et 4)
+        operationId: $sourceDescriptions.sanctionRSA.traiterSanctionRsa
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer $steps.recuperer-access-token.outputs.accessToken"
+          - name: ft-jeton-usager
+            in: header
+            description: Jeton usager obtenu à l’étape précédente et requis pour exécuter cette étape du workflow
+            value: $steps.forger-jeton-usager.outputs.jetonUsager
+        requestBody:
+          contentType: application/json
+          payload:
+            identifiantConsequenceSanction: $steps.recuperer-propositions-suspension-RSA-a-instruire.outputs.identifiantConsequenceSanction
+            evenement.typeEvenement: VALID_SANCTION
+            evenement.dateEvenement: date_format_YYYY-MM-dd
+            typeConsequenceSanctionValide: $steps.consulter-proposition-sanction-usager.outputs.typeConsequenceSanction
+            modaliteDecisionValidee: $steps.consulter-proposition-sanction-usager.outputs.modaliteProposee
+            montantValide: $steps.consulter-proposition-sanction-usager.outputs.montantPropose
+            dureeValidee: $steps.consulter-proposition-sanction-usager.outputs.dureeProposee
+        successCriteria:
+          - condition: $statusCode == 200
+          - condition: $response.body.codeSortie == "C001"
+  - workflowId: wf-confirmer-proposition-suppression-RSA
+    summary:  Valider une proposition de suppression de RSA pour un bRSA accompagné par FT
+    description: >
+      Ce workflow décrit comment un partenaire confirme une proposition de suppression de RSA initiée par France Travail.
+      France Travail, en tant que référent d'accompagnement d'un usager bRSA, effectue les contrôles de respect des engagements et peut être amené à transmettre des propositions de sanction pour cet usager en cas de manquement. Le partenaire a alors la responsabilité de confirmer ou d'infirmer la proposition de sanction.
+      Ce workflow décrit un cas de proposition de suppression de RSA. A noter qu'il est quasi identique au workflow pour une levée de suspension RSA, au paramétrage près (codeActivite : ACT369, typeEvenement : VALID_LEVEE_SUSP ou REFUS_LEVEE_SUSP).
+    inputs:
+      type: object
+      properties:
+        client_id:
+          type: string
+        client_secret:
+          type: string
+      required: [client_id, client_secret]
+    steps:
+      - stepId: recuperer-access-token
+        workflowId: wf-authentification
+        inputs:
+          client_id: $inputs.client_id
+          client_secret: $inputs.client_secret
+          scopes: profil_accedant  api_rechercher-usagerv2 rechercheusager api_activites-operationnellesv2 activitesCD api_gestion-sanctions-rsav1 gestiondesmanquements
+        outputs:
+          accessToken: $response.body.access_token
+      - stepId: recuperer-propositions-suppression-RSA-a-traiter
+        description:  Récupération de la liste des propositions de suppression à traiter
+        operationId: $sourceDescriptions.activitesOperationnelles.getListActivites
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer $steps.recuperer-access-token.outputs.accessToken"
+          - name: codeActivite
+            in: query
+            value: ACT370
+        successCriteria:
+          - condition: $statusCode == 200
+          - condition: $response.body.activites[0].usager[0].typeIdentifiant == "numeroFranceTravail"
+          - condition: $response.body.activites[0].attributsSpecifiques[0].nom == "identifiantConsequenceSanction"
+        outputs:
+          numeroFranceTravail: $response.body.activites[0].usager[0].identifiant
+          identifiantConsequenceSanction: $response.body.activites[0].attributsSpecifiques[0].valeur
+        onSuccess:
+          - name: propositionsSanctionTrouvees
+            type: goto
+            stepId: forger-jeton-usager
+            criteria:
+              - condition: $response.body.activites.length > 0
+          - name:  pasDePropositionsSanction
+            type: end
+            criteria:
+              - condition: $response.body.activites.length == 0
+      - stepId: forger-jeton-usager
+        description: >
+          Génération d'un jeton d'habilitation qui permettra au partenaire de consulter les données de sanctions par usager.
+          Cette étape doit être exécutée pour chaque usager retourné à l'étape précédente.
+        operationId: $sourceDescriptions.rechercheUsager.RechercherUsagerParNumeroFranceTravail
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer {$steps.recuperer-access-token.outputs.accessToken}"
+        requestBody:
+          application/json:
+            numeroFranceTravail: $steps.recuperer-propositions-suspension-RSA-a-instruire.outputs.numeroFranceTravail
+        successCriteria:
+          - condition: $statusCode == 200
+          - condition: $response.body.jetonUsager != null
+        outputs:
+          jetonUsager: $response.body.jetonUsager
+        onFailure:
+          - name: usagerNonRattache
+            type: goto
+            stepId: recuperer-propositions-suspension-RSA-a-instruire
+            criteria:
+              - condition: $statusCode == 403
+              - condition: $response.body.codeRetour == "R002"
+      - stepId: consulter-proposition-suppression-RSA
+        description: "Consultation de la proposition de sanction d'un usager. Cette étape doit être répétée pour chaque usager retourné à l'étape $steps.recuperer-propositions-suspension-RSA-a-instruire.stepId"
+        operationId: $sourceDescriptions.sanctionRSA.lireDetailSanctionRsa
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer $steps.recuperer-access-token.outputs.accessToken"
+          - name: ft-jeton-usager
+            in: header
+            description: Jeton usager obtenu à l'étape précédente et requis pour exécuter cette étape du workflow
+            value: $steps.forger-jeton-usager.output.jetonUsager
+          - name: identifiantSanction
+            in: query
+            value: $steps.recuperer-propositions-suspension-RSA-a-instruire.outputs.identifiantConsequenceSanction
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          modaliteProposee: $response.body.modaliteProposee
+          montantPropose: $response.body.montantPropose
+          typeConsequenceSanction: $response.body.typeConsequenceSanction
+          dureeProposee: $response.body.dureeProposee
+      - stepId: valider-suppression-RSA
+        description: >
+          Valider la proposition de sanction d'un usager.
+          Cette étape doit être répétée pour chaque usager retourné à l'étape $steps.recuperer-propositions-suspension-RSA-a-instruire.stepId.
+          Ici on valide une proposition sanction (VALID_SANCTION), mais il est possible de la refuser (REFUS_SANCTION).
+          Ici on choisit de conserver les modalités de sanction proposées par FranceTravail, mais il est possible de les modifier (modaliteDecisionValidee = M ou P; montantValide : en euros si modalité M ou un taux entre 30 et 100 si modalité P, dureeValidee : nombre de mois entre 1 et 4)
+        operationId: $sourceDescriptions.sanctionRSA.traiterSanctionRsa
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer $steps.recuperer-access-token.outputs.accessToken"
+          - name: ft-jeton-usager
+            in: header
+            description: Jeton usager obtenu à l'étape précédente et requis pour exécuter cette étape du workflow
+            value: $steps.forger-jeton-usager.outputs.jetonUsager
+        requestBody:
+          contentType: application/json
+          payload:
+            identifiantConsequenceSanction: $steps.recuperer-p
+            evenement.typeEvenement: VALID_SANCTION
+            evenement.dateEvenement: date_format_YYYY-MM-dd
+            typeConsequenceSanctionValide: $steps.consulter-proposition-sanction-usager.outputs.typeConsequenceSanction
+            modaliteDecisionValidee: $steps.consulter-proposition-sanction-usager.outputs.modaliteProposee
+            montantValide: $steps.consulter-proposition-sanction-usager.outputs.montantPropose
+            dureeValidee: $steps.consulter-proposition-sanction-usager.outputs.dureeProposee
+        successCriteria:
+          - condition: $statusCode == 200
+          - condition: $response.body.codeSortie == "C001"
+  - workflowId: wf-partager-demande-radiation
+    summary:  Transmettre une demande de radiation d'un usager
+    description: >
+      Ce workflow décrit comment un partenaire partage une décision de sanction RSA prise pour un usager qu'il accompagne, si la décision légitime une demande de radiation de la liste des demandeurs d'emploi. 
+      Dans ce cas ce n'est pas Francetravail qui est à l'origine de la proposition de sanction, mais le partenaire.
+      Ce workflow est toutefois adaptable pour un cas de demande de radiation faisant suite à une décision prise pour un bRSA accompagné par France Travail : on n'effectue pas l'étape de transmission de la décision, et on indique à l'étape de demande de radiation l'identifiant de la sanction qui a été validée suite à une proposition de sanction émise par France Travail.
+    inputs:
+      type: object
+      properties:
+        client_id:
+          type: string
+        client_secret:
+          type: string
+      required: [client_id, client_secret]
+    steps:
+      - stepId: recuperer-access-token
+        workflowId: wf-authentification
+        inputs:
+          client_id: $inputs.client_id
+          client_secret: $inputs.client_secret
+          scopes: profil_accedant  api_rechercher-usagerv2 rechercheusager api_gestion-sanctions-rsav1 gestiondesmanquements decisionSanctionPartenaire demandeRadiation
+        outputs:
+          accessToken: $response.body.access_token
+      - stepId: forger-jeton-usager
+        description: >
+          Génération d’un jeton d’habilitation qui permettra au partenaire de consulter les données de sanctions par usager. 
+          Cette étape doit être exécutée pour chaque usager retourné à l’étape précédente.
+        operationId: $sourceDescriptions.rechercheUsager.RechercherUsagerParNumeroFranceTravail
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer {$steps.recuperer-access-token.outputs.accessToken}"
+        requestBody:
+          application/json:
+            numeroFranceTravail: $steps.recuperer-propositions-suspension-RSA-a-instruire.outputs.numeroFranceTravail
+        successCriteria:
+          - condition: $statusCode == 200
+          - condition: $response.body.jetonUsager != null
+        outputs:
+          jetonUsager: $response.body.jetonUsager
+        onFailure:
+          - name: usagerNonRattache
+            type: goto
+            stepId: error
+            criteria:
+              - condition: $statusCode == 403
+              - condition: $response.body.codeRetour == "R002"
+      - stepId: transmettre-decision-sanction-usager
+        description: Transmettre la décision de sanction d'un usager. Etape facultative à réaliser si le partenaire est à l'origine de la proposition de sanction (et pas France Travail)
+        operationId: $sourceDescriptions.sanctionRSA.traiterDecisionSanctionRSA
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer $steps.recuperer-access-token.outputs.accessToken"
+          - name: ft-jeton-usager
+            in: header
+            description: Jeton usager obtenu à l'étape précédente et requis pour exécuter cette étape du workflow
+            value: $steps.forger-jeton-usager.outputs.jetonUsager
+        successCriteria:
+          - condition: $statusCode == 200
+          - condition: $response.body.codeSortie == "C001"
+        outputs:
+          identifiantConsequenceSanction: $response.body.identifiantConsequenceSanction
+      - stepId: consulter-decision-sanction-usager
+        description: Vérifier la prise en compte de la décision de sanction
+        operationId: $sourceDescriptions.sanctionRSA.lireDetailSanctionRsa
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer $steps.recuperer-access-token.outputs.accessToken"
+          - name: ft-jeton-usager
+            in: header
+            description: Jeton usager obtenu à l'étape précédente et requis pour exécuter cette étape du workflow
+            value: $steps.forger-jeton-usager.output.jetonUsager
+          - name: identifiantSanction
+            in: query
+            value: $steps.transmettre-decision-sanction-usager.outputs.identifiantConsequenceSanction
+        successCriteria:
+          - condition: $statusCode == 200
+      - stepId: transmettre-demande-radiation
+        description: Transmettre la demande de radiation des demandeurs d'emploi pour un usager bénéficiaire du RSA non accompagné par FT
+        operationId: $sourceDescriptions.sanctionRSA.demandeRadiation
+        parameters:
+          - name: Authorization
+            in: header
+            value: "Bearer $steps.recuperer-access-token.outputs.accessToken"
+          - name: ft-jeton-usager
+            in: header
+            description: Jeton usager obtenu à l'étape précédente et requis pour exécuter cette étape du workflow
+            value: $steps.forger-jeton-usager.output.jetonUsager
+        requestBody:
+          contentType: application/json
+          payload:
+            identifiantConsequenceSanction: $steps.transmettre-decision-sanction-usager.outputs.identifiantConsequenceSanction
+        successCriteria:
+          - condition: $statusCode == 200
+
+      

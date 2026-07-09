@@ -1,0 +1,87 @@
+# La notice de montage — orchestration du parcours "Orienter un allocataire RSA"
+# Règle de granularité : 1 Arazzo = 1 cas d'usage consommateur (JTBD)
+# Les stepId sont en langage métier, alignés sur les étapes du Mermaid du README.
+
+arazzo: 1.0.1
+
+info:
+  title: Orienter un allocataire RSA vers le bon accompagnement
+  summary: >
+    De la réception du dossier à la notification de l'orientation :
+    le parcours complet côté conseil départemental.
+  version: 0.1.0
+
+sourceDescriptions:
+  # Les briques : contrats publiés sur francetravail.io — référencés, jamais copiés.
+  - name: api-dossier
+    url: "[À REMPLACER : URL du contrat OpenAPI sur francetravail.io]"
+    type: openapi
+  - name: api-orientation
+    url: "[À REMPLACER : URL du contrat OpenAPI sur francetravail.io]"
+    type: openapi
+
+workflows:
+  - workflowId: orientation-allocataire-rsa
+    summary: Recevoir, vérifier, qualifier, affecter, notifier.
+
+    inputs:
+      type: object
+      properties:
+        referenceDossier:
+          type: string
+          description: La référence du dossier RSA reçue par le conseil départemental.
+
+    steps:
+      - stepId: recevoir-dossier
+        description: Récupérer le dossier de l'allocataire à partir de sa référence.
+        operationId: "[À REMPLACER : operationId — api-dossier]"
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          dossierId: $response.body#/id
+
+      - stepId: verifier-eligibilite
+        description: Vérifier l'éligibilité de l'allocataire à l'orientation.
+        operationId: "[À REMPLACER : operationId — api-dossier]"
+        parameters:
+          - name: dossierId
+            in: path
+            value: $steps.recevoir-dossier.outputs.dossierId
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          eligible: $response.body#/eligible
+
+      - stepId: qualifier-profil
+        description: Qualifier le profil socio-professionnel de l'allocataire.
+        operationId: "[À REMPLACER : operationId — api-orientation]"
+        parameters:
+          - name: dossierId
+            in: path
+            value: $steps.recevoir-dossier.outputs.dossierId
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          profilId: $response.body#/profilId
+
+      - stepId: affecter-accompagnement
+        description: Affecter l'organisme et le type d'accompagnement adaptés au profil.
+        operationId: "[À REMPLACER : operationId — api-orientation]"
+        parameters:
+          - name: profilId
+            in: path
+            value: $steps.qualifier-profil.outputs.profilId
+        successCriteria:
+          - condition: $statusCode == 201
+        outputs:
+          orientationId: $response.body#/orientationId
+
+      - stepId: notifier-orientation
+        description: Notifier l'orientation décidée au dossier de l'allocataire.
+        operationId: "[À REMPLACER : operationId — api-orientation]"
+        parameters:
+          - name: orientationId
+            in: path
+            value: $steps.affecter-accompagnement.outputs.orientationId
+        successCriteria:
+          - condition: $statusCode == 200
