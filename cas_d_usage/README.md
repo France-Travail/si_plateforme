@@ -4,8 +4,8 @@ Chaque dossier de ce répertoire est un **cas d'usage partenaire complet** — u
 
 | Dossier | Contenu |
 |---|---|
-| [`Gestion des sanctions/`](./sanction/) | 🚢 Gérer les sanctions des allocataires RSA |
-| [`_template/`](./_template/) | 📦 Le gabarit — à copier pour créer un nouveau cas d'usage |
+| [`🚢 /sanction`](./sanction/) | 🚢 Donner suite aux propositions de sanction |
+| [`/_template`](./_template/) | 📦 Le gabarit — à copier pour créer un nouveau cas d'usage |
 
 ---
 

@@ -1,18 +1,10 @@
-<!--
-  GABARIT — à copier, ne pas modifier ce dossier directement.
-  1. Copier _template/ sous un nom métier : verbe-objet-contexte (ex. transmission-dossier-cd)
-  2. Remplacer tous les [À REMPLACER : ...]
-  3. Laisser les [X] visibles tant que la valeur n'est pas connue
-  4. Configurer aussi, hors fichier : le titre de la ligne dans le README racine
--->
 
-# [À REMPLACER : le job, en langage métier — verbe + objet + bénéfice]
+# Donner suite aux propositions de sanction
 
+![famille](https://img.shields.io/badge/famille-LPE-blue)
 ![statut](https://img.shields.io/badge/statut-brouillon-lightgrey)
-![LPE](https://img.shields.io/badge/acc%C3%A8s-%5BX%5D-blue)
 
-
-**Pour les [À REMPLACER : type de partenaire].** [À REMPLACER : une phrase — de quel point de départ à quel point d'arrivée, et ce que le partenaire n'a plus à faire seul.]
+**Pour les conseils départementaux.** [À REMPLACER : une phrase — de quel point de départ à quel point d'arrivée, et ce que le partenaire n'a plus à faire seul.]
 
 ---
 
@@ -25,9 +17,11 @@
 
 ```mermaid
 flowchart LR
-    A["1 · [Étape]"] --> B["2 · [Étape]"]
-    B --> C["3 · [Étape]"]
-    C --> D["4 · [Étape]"]
+    A["1 · Repérer les propositions<br/>de sanction à traiter"] --> B["2 · Consulter le manquement<br/>et ses conséquences"]
+    B --> C{"3 · Décider"}
+    C -->|"valider"| D["4 · Transmettre<br/>la décision"]
+    C -->|"refuser"| D
+    D --> E["✓ Dossier mis à jour ·<br/>organisme payeur notifié"]
 ```
 
 Chaque étape consomme la sortie de la précédente. L'ordre, les dépendances inter-étapes et les données propagées sont décrits dans [`parcours.arazzo.yaml`](./parcours.arazzo.yaml) — **la notice de montage, versionnée et testable**.
