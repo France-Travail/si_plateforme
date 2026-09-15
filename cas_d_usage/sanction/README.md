@@ -13,8 +13,6 @@
 <!-- La notice visuelle : une boîte par étape métier, dans l'ordre du montage.
      Règle : des libellés MÉTIER (Recevoir, Vérifier...), jamais des noms d'endpoints. -->
 
-// David : MERMAID MACRO + LIEN VERS EXCALIDRAW
-
 ```mermaid
 flowchart LR
     A["1 · Repérer les propositions<br/>de sanction à traiter"] --> B["2 · Consulter le manquement<br/>et ses conséquences"]
@@ -24,29 +22,8 @@ flowchart LR
     D --> E["✓ Dossier mis à jour ·<br/>organisme payeur notifié"]
 ```
 
-Chaque étape consomme la sortie de la précédente. L'ordre, les dépendances inter-étapes et les données propagées sont décrits dans [`parcours.arazzo.yaml`](./parcours.arazzo.yaml) — **la notice de montage, versionnée et testable**.
+Chaque étape consomme la sortie de la précédente. L'ordre, les dépendances inter-étapes et les données propagées sont décrits dans [`parcours_arazzo_sanctions-v1.0`](./parcours_arazzo_sanctions-v1.0.yaml) — **la notice de montage, versionnée et testable**.
 
----
-
-## Avant / après
-
-| | |
-|---|---|
-| **Avant** | [À REMPLACER : la douleur — tickets, délais, ressaisies] |
-| **Après** | [À REMPLACER : l'autonomie — délai cible, zéro ticket] |
-
----
-
-## Les API mobilisées
-
-Les contrats des API utilisées par ce parcours sont documentés sur le catalogue officiel — **on ne les duplique pas ici** :
-
-| API (→ francetravail.io) | Version validée pour ce parcours | Rôle dans le montage |
-|---|---|---|
-| [À REMPLACER : nom + lien FT.io] | v[X] | [À REMPLACER] |
-| [À REMPLACER : nom + lien FT.io] | v[X] | [À REMPLACER] |
-
-> ⚠️ Ce parcours est validé contre les versions ci-dessus. Une montée de version d'une API mobilisée déclenche une revalidation du parcours (règle Last Call).
 
 ---
 
@@ -68,4 +45,4 @@ Ouvrez une [issue](../../../../issues) préfixée `[À REMPLACER : tag court, ex
 
 ---
 
-_Version du parcours : v0.1 · Dernière validation : [X]_
+_Version du parcours : v0.1 · Dernière validation : [15/09/2026]_
