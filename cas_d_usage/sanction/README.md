@@ -22,7 +22,7 @@ flowchart LR
     D --> E["✓ Dossier mis à jour ·<br/>organisme payeur notifié"]
 ```
 
-Chaque étape consomme la sortie de la précédente. L'ordre, les dépendances inter-étapes et les données propagées sont décrits dans [`parcours_arazzo_sanctions-v1.0`](./parcours_arazzo_sanctions-v1.0.yaml) — **la notice de montage, versionnée et testable**.
+Chaque étape consomme la sortie de la précédente. L'ordre, les dépendances inter-étapes et les données propagées sont décrits dans [`parcours_arazzo_sanctions-v1.0`](./parcours_arazzo_sanctions-v1.0.md) ([`yaml`](./parcours_arazzo_sanctions-v1.0.yaml)) — **la notice de montage, versionnée et testable**.
 
 
 ---
