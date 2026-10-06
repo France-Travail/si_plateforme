@@ -4,7 +4,7 @@
 ![famille](https://img.shields.io/badge/famille-LPE-blue)
 ![statut](https://img.shields.io/badge/statut-brouillon-lightgrey)
 
-**Pour les conseils départementaux.** [À REMPLACER : une phrase — de quel point de départ à quel point d'arrivée, et ce que le partenaire n'a plus à faire seul.]
+**Pour les conseils départementaux.**
 
 ---
 
@@ -34,8 +34,6 @@ Chaque étape consomme la sortie de la précédente. L'ordre, les dépendances i
 | **1. Comprendre** | [`processus-metier/`](./processus-metier/) | Le contexte, les acteurs, les règles de gestion (voir ce qu'on trouve côté FT.io) |
 | **2. Rejouer** | [`postman/`](./postman/) | Le parcours exécuté de bout en bout, sans écrire une ligne de code |
 
-**Pré-requis d'accès** : [À REMPLACER : conventionnement, FT Connect, scopes — ou lien vers `transverse/`]
-// SUR LE MVP on part sur le fait que l'arazzo du use case porte tout (le temps de voir si on peut composer les arazzo)
 
 ---
 
