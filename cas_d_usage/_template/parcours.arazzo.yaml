@@ -1,0 +1,47 @@
+# La notice de montage — orchestration du parcours (spécification Arazzo)
+# Règle de granularité : 1 Arazzo = 1 cas d'usage consommateur (JTBD)
+# Les stepId sont en langage métier, alignés sur les étapes du Mermaid du README.
+
+arazzo: 1.0.1
+
+info:
+  title: "[À REMPLACER : le job, même intitulé que le README]"
+  summary: "[À REMPLACER : une phrase — du point de départ au point d'arrivée]"
+  version: 0.1.0
+
+sourceDescriptions:
+  # Les briques : on référence les contrats publiés sur francetravail.io, on ne les copie pas.
+  - name: api-a-remplacer
+    url: "[À REMPLACER : URL du contrat OpenAPI sur francetravail.io]"
+    type: openapi
+
+workflows:
+  - workflowId: a-remplacer-nom-metier
+    summary: "[À REMPLACER : le parcours en une phrase]"
+
+    inputs:
+      type: object
+      properties:
+        exemple_identifiant:
+          type: string
+          description: "[À REMPLACER : les données que le partenaire possède au départ]"
+
+    steps:
+      - stepId: etape-1-nom-metier
+        description: "[À REMPLACER : ce que fait cette étape, en langage métier]"
+        operationId: "[À REMPLACER : operationId du contrat OpenAPI]"
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          # La donnée propagée vers l'étape suivante — c'est ici que la notice prend son sens
+          sortie_exemple: $response.body#/id
+
+      - stepId: etape-2-nom-metier
+        description: "[À REMPLACER]"
+        operationId: "[À REMPLACER]"
+        parameters:
+          - name: exemple
+            in: path
+            value: $steps.etape-1-nom-metier.outputs.sortie_exemple
+        successCriteria:
+          - condition: $statusCode == 200
