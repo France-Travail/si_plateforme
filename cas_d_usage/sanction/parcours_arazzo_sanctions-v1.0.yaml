@@ -21,7 +21,7 @@ sourceDescriptions:
     url: file://API_LPE_ActivitesOperationnelles_v2_openapi.json
     type: openapi
   - name: sanctionRSA
-    url: file://API_LPE_SanctionsRSA_v1.1_openapi.json
+    url: file://API_LPE_SAnctionsRSA_v1.4_openapi.json
     type: openapi
 
 workflows:
@@ -43,6 +43,10 @@ workflows:
         operationId: $sourceDescriptions.FranceTravailAuthCC.getAccessToken
         description: >
           Récupération d'un access token avec les scopes adéquats
+        parameters:
+          - name: realm
+            in: query
+            value: "/agent"
         requestBody:
           contentType: application/x-www-form-urlencoded
           payload:
@@ -93,16 +97,27 @@ workflows:
           - name: Authorization
             in: header
             value: "Bearer $steps.recuperer-access-token.outputs.accessToken"
+          - name: pa-nom-agent
+            in: header
+            value: "BATCH"
+          - name: pa-prenom-agent
+            in: header
+            value: "BATCH"
+          - name: pa-identifiant-agent
+            in: header
+            value: "BATCH"
           - name: codeActivite
             in: query
             value: ACT366
         successCriteria:
           - condition: $statusCode == 200
-          - condition: $response.body.activites[0].usager[0].typeIdentifiant == "numeroFranceTravail"
-          - condition: $response.body.activites[0].attributsSpecifiques[0].nom == "identifiantConsequenceSanction"
+          - condition: $response.body.activites[0].usager.typeIdentifiant == "numeroFranceTravail"
+          # Extension non-standard : findByProperty() filtre le tableau par propriété au lieu d'utiliser un index fixe
+          - condition: $response.body.activites[0].attributsSpecifiques.findByProperty(nom, "idConsequenceSanction").valeur != null
         outputs:
-          numeroFranceTravail: $response.body.activites[0].usager[0].identifiant
-          identifiantConsequenceSanction: $response.body.activites[0].attributsSpecifiques[0].valeur
+          numeroFranceTravail: $response.body.activites[0].usager.identifiant
+          # Extension non-standard : findByProperty() filtre le tableau par propriété au lieu d'utiliser un index fixe
+          identifiantConsequenceSanction: $response.body.activites[0].attributsSpecifiques.findByProperty(nom, "idConsequenceSanction").valeur
         onSuccess:
           - name: propositionsSanctionTrouvees
             type: goto
@@ -115,13 +130,22 @@ workflows:
               - condition: $response.body.activites.length == 0
       - stepId: forger-jeton-usager
         description: >
-          Génération d’un jeton d’habilitation qui permettra au partenaire de consulter les données de sanctions par usager. 
+          Génération d’un jeton d’habilitation qui permettra au partenaire de consulter les données de sanctions par usager.
           Cette étape doit être exécutée pour chaque usager retourné à l’étape précédente.
         operationId: $sourceDescriptions.rechercheUsager.RechercherUsagerParNumeroFranceTravail
         parameters:
           - name: Authorization
             in: header
-            value: "Bearer {$steps.recuperer-access-token.outputs.accessToken}"
+            value: "Bearer $steps.recuperer-access-token.outputs.accessToken"
+          - name: pa-nom-agent
+            in: header
+            value: "BATCH"
+          - name: pa-prenom-agent
+            in: header
+            value: "BATCH"
+          - name: pa-identifiant-agent
+            in: header
+            value: "BATCH"
         requestBody:
           application/json:
             numeroFranceTravail: $steps.recuperer-propositions-suspension-RSA-a-instruire.outputs.numeroFranceTravail
@@ -130,6 +154,10 @@ workflows:
           - condition: $response.body.jetonUsager != null
         outputs:
           jetonUsager: $response.body.jetonUsager
+        onSuccess:
+          - name: usagerRattache
+            type: goto
+            stepId: consulter-proposition-sanction-usager
         onFailure:
           - name: usagerNonRattache
             type: goto
@@ -138,16 +166,25 @@ workflows:
               - condition: $statusCode == 403
               - condition: $response.body.codeRetour == "R002"
       - stepId: consulter-proposition-sanction-usager
-        description: "Consultation de la proposition de sanction d'un usager. Cette étape doit être répétée pour chaque usager retourné à l’étape $steps.recuperer-propositions-suspension-RSA-a-instruire.stepId"
+        description: "Consultation de la proposition de sanction d’un usager. Cette étape doit être répétée pour chaque usager retourné à l’étape $steps.recuperer-propositions-suspension-RSA-a-instruire.stepId"
         operationId: $sourceDescriptions.sanctionRSA.lireDetailSanctionRsa
         parameters:
           - name: Authorization
             in: header
             value: "Bearer $steps.recuperer-access-token.outputs.accessToken"
+          - name: pa-nom-agent
+            in: header
+            value: "BATCH"
+          - name: pa-prenom-agent
+            in: header
+            value: "BATCH"
+          - name: pa-identifiant-agent
+            in: header
+            value: "BATCH"
           - name: ft-jeton-usager
             in: header
-            description: Jeton usager obtenu à l'étape précédente et requis pour exécuter cette étape du workflow
-            value: $steps.forger-jeton-usager.output.jetonUsager
+            description: Jeton usager obtenu à l’étape précédente et requis pour exécuter cette étape du workflow
+            value: $steps.forger-jeton-usager.outputs.jetonUsager
           - name: identifiantSanction
             in: query
             value: $steps.recuperer-propositions-suspension-RSA-a-instruire.outputs.identifiantConsequenceSanction
@@ -160,18 +197,27 @@ workflows:
           dureeProposee: $response.body.dureeProposee
       - stepId: instruire-proposition-sanction-usager
         description: >
-          Instruire la proposition de sanction d'un usager. 
+          Instruire la proposition de sanction d’un usager.
           Cette étape doit être répétée pour chaque usager retourné à l’étape $steps.recuperer-propositions-suspension-RSA-a-instruire.stepId.
-          Ici on saisit (i.e. on indique qu'on instruit) la sanction proposée (SAISIE_SANCTION). 
-          Mais il est aussi possible de refuser l'instruction (REFUS_SAISIE_SANCTION). Attention REFUS_SAISIE_SANCTION signifie que la sanction est validée telle que préconisée par FranceTravail.
+          Ici on saisit (i.e. on indique qu’on instruit) la sanction proposée (SAISIE_SANCTION).
+          Mais il est aussi possible de refuser l’instruction (REFUS_SAISIE_SANCTION). Attention REFUS_SAISIE_SANCTION signifie que la sanction est validée telle que préconisée par FranceTravail.
         operationId: $sourceDescriptions.sanctionRSA.traiterSanctionRsa
         parameters:
           - name: Authorization
             in: header
             value: "Bearer $steps.recuperer-access-token.outputs.accessToken"
+          - name: pa-nom-agent
+            in: header
+            value: "BATCH"
+          - name: pa-prenom-agent
+            in: header
+            value: "BATCH"
+          - name: pa-identifiant-agent
+            in: header
+            value: "BATCH"
           - name: ft-jeton-usager
             in: header
-            description: Jeton usager obtenu à l'étape précédente et requis pour exécuter cette étape du workflow
+            description: Jeton usager obtenu à l’étape précédente et requis pour exécuter cette étape du workflow
             value: $steps.forger-jeton-usager.outputs.jetonUsager
         requestBody:
           contentType: application/json
@@ -194,6 +240,15 @@ workflows:
           - name: Authorization
             in: header
             value: "Bearer $steps.recuperer-access-token.outputs.accessToken"
+          - name: pa-nom-agent
+            in: header
+            value: "BATCH"
+          - name: pa-prenom-agent
+            in: header
+            value: "BATCH"
+          - name: pa-identifiant-agent
+            in: header
+            value: "BATCH"
           - name: ft-jeton-usager
             in: header
             description: Jeton usager obtenu à l’étape précédente et requis pour exécuter cette étape du workflow
@@ -241,16 +296,27 @@ workflows:
           - name: Authorization
             in: header
             value: "Bearer $steps.recuperer-access-token.outputs.accessToken"
+          - name: pa-nom-agent
+            in: header
+            value: "BATCH"
+          - name: pa-prenom-agent
+            in: header
+            value: "BATCH"
+          - name: pa-identifiant-agent
+            in: header
+            value: "BATCH"
           - name: codeActivite
             in: query
             value: ACT370
         successCriteria:
           - condition: $statusCode == 200
-          - condition: $response.body.activites[0].usager[0].typeIdentifiant == "numeroFranceTravail"
-          - condition: $response.body.activites[0].attributsSpecifiques[0].nom == "identifiantConsequenceSanction"
+          - condition: $response.body.activites[0].usager.typeIdentifiant == "numeroFranceTravail"
+          # Extension non-standard : findByProperty() filtre le tableau par propriété au lieu d'utiliser un index fixe
+          - condition: $response.body.activites[0].attributsSpecifiques.findByProperty(nom, "idConsequenceSanction").valeur != null
         outputs:
-          numeroFranceTravail: $response.body.activites[0].usager[0].identifiant
-          identifiantConsequenceSanction: $response.body.activites[0].attributsSpecifiques[0].valeur
+          numeroFranceTravail: $response.body.activites[0].usager.identifiant
+          # Extension non-standard : findByProperty() filtre le tableau par propriété au lieu d'utiliser un index fixe
+          identifiantConsequenceSanction: $response.body.activites[0].attributsSpecifiques.findByProperty(nom, "idConsequenceSanction").valeur
         onSuccess:
           - name: propositionsSanctionTrouvees
             type: goto
@@ -269,7 +335,16 @@ workflows:
         parameters:
           - name: Authorization
             in: header
-            value: "Bearer {$steps.recuperer-access-token.outputs.accessToken}"
+            value: "Bearer $steps.recuperer-access-token.outputs.accessToken"
+          - name: pa-nom-agent
+            in: header
+            value: "BATCH"
+          - name: pa-prenom-agent
+            in: header
+            value: "BATCH"
+          - name: pa-identifiant-agent
+            in: header
+            value: "BATCH"
         requestBody:
           application/json:
             numeroFranceTravail: $steps.recuperer-propositions-suspension-RSA-a-instruire.outputs.numeroFranceTravail
@@ -278,6 +353,10 @@ workflows:
           - condition: $response.body.jetonUsager != null
         outputs:
           jetonUsager: $response.body.jetonUsager
+        onSuccess:
+          - name: usagerRattache
+            type: goto
+            stepId: consulter-proposition-suppression-RSA
         onFailure:
           - name: usagerNonRattache
             type: goto
@@ -292,10 +371,19 @@ workflows:
           - name: Authorization
             in: header
             value: "Bearer $steps.recuperer-access-token.outputs.accessToken"
+          - name: pa-nom-agent
+            in: header
+            value: "BATCH"
+          - name: pa-prenom-agent
+            in: header
+            value: "BATCH"
+          - name: pa-identifiant-agent
+            in: header
+            value: "BATCH"
           - name: ft-jeton-usager
             in: header
             description: Jeton usager obtenu à l'étape précédente et requis pour exécuter cette étape du workflow
-            value: $steps.forger-jeton-usager.output.jetonUsager
+            value: $steps.forger-jeton-usager.outputs.jetonUsager
           - name: identifiantSanction
             in: query
             value: $steps.recuperer-propositions-suspension-RSA-a-instruire.outputs.identifiantConsequenceSanction
@@ -317,6 +405,15 @@ workflows:
           - name: Authorization
             in: header
             value: "Bearer $steps.recuperer-access-token.outputs.accessToken"
+          - name: pa-nom-agent
+            in: header
+            value: "BATCH"
+          - name: pa-prenom-agent
+            in: header
+            value: "BATCH"
+          - name: pa-identifiant-agent
+            in: header
+            value: "BATCH"
           - name: ft-jeton-usager
             in: header
             description: Jeton usager obtenu à l'étape précédente et requis pour exécuter cette étape du workflow
@@ -335,11 +432,11 @@ workflows:
           - condition: $statusCode == 200
           - condition: $response.body.codeSortie == "C001"
   - workflowId: wf-partager-demande-radiation
-    summary:  Transmettre une demande de radiation d'un usager
+    summary:  Transmettre une demande de radiation d’un usager
     description: >
-      Ce workflow décrit comment un partenaire partage une décision de sanction RSA prise pour un usager qu'il accompagne, si la décision légitime une demande de radiation de la liste des demandeurs d'emploi. 
-      Dans ce cas ce n'est pas Francetravail qui est à l'origine de la proposition de sanction, mais le partenaire.
-      Ce workflow est toutefois adaptable pour un cas de demande de radiation faisant suite à une décision prise pour un bRSA accompagné par France Travail : on n'effectue pas l'étape de transmission de la décision, et on indique à l'étape de demande de radiation l'identifiant de la sanction qui a été validée suite à une proposition de sanction émise par France Travail.
+      Ce workflow décrit comment un partenaire partage une décision de sanction RSA prise pour un usager qu’il accompagne, si la décision légitime une demande de radiation de la liste des demandeurs d’emploi.
+      Dans ce cas ce n’est pas Francetravail qui est à l’origine de la proposition de sanction, mais le partenaire.
+      Ce workflow est toutefois adaptable pour un cas de demande de radiation faisant suite à une décision prise pour un bRSA accompagné par France Travail : on n’effectue pas l’étape de transmission de la décision, et on indique à l’étape de demande de radiation l’identifiant de la sanction qui a été validée suite à une proposition de sanction émise par France Travail.
     inputs:
       type: object
       properties:
@@ -359,13 +456,22 @@ workflows:
           accessToken: $response.body.access_token
       - stepId: forger-jeton-usager
         description: >
-          Génération d’un jeton d’habilitation qui permettra au partenaire de consulter les données de sanctions par usager. 
+          Génération d’un jeton d’habilitation qui permettra au partenaire de consulter les données de sanctions par usager.
           Cette étape doit être exécutée pour chaque usager retourné à l’étape précédente.
         operationId: $sourceDescriptions.rechercheUsager.RechercherUsagerParNumeroFranceTravail
         parameters:
           - name: Authorization
             in: header
-            value: "Bearer {$steps.recuperer-access-token.outputs.accessToken}"
+            value: "Bearer $steps.recuperer-access-token.outputs.accessToken"
+          - name: pa-nom-agent
+            in: header
+            value: "BATCH"
+          - name: pa-prenom-agent
+            in: header
+            value: "BATCH"
+          - name: pa-identifiant-agent
+            in: header
+            value: "BATCH"
         requestBody:
           application/json:
             numeroFranceTravail: $steps.recuperer-propositions-suspension-RSA-a-instruire.outputs.numeroFranceTravail
@@ -374,6 +480,10 @@ workflows:
           - condition: $response.body.jetonUsager != null
         outputs:
           jetonUsager: $response.body.jetonUsager
+        onSuccess:
+          - name: usagerRattache
+            type: goto
+            stepId: transmettre-decision-sanction-usager
         onFailure:
           - name: usagerNonRattache
             type: goto
@@ -388,6 +498,15 @@ workflows:
           - name: Authorization
             in: header
             value: "Bearer $steps.recuperer-access-token.outputs.accessToken"
+          - name: pa-nom-agent
+            in: header
+            value: "BATCH"
+          - name: pa-prenom-agent
+            in: header
+            value: "BATCH"
+          - name: pa-identifiant-agent
+            in: header
+            value: "BATCH"
           - name: ft-jeton-usager
             in: header
             description: Jeton usager obtenu à l'étape précédente et requis pour exécuter cette étape du workflow
@@ -404,10 +523,19 @@ workflows:
           - name: Authorization
             in: header
             value: "Bearer $steps.recuperer-access-token.outputs.accessToken"
+          - name: pa-nom-agent
+            in: header
+            value: "BATCH"
+          - name: pa-prenom-agent
+            in: header
+            value: "BATCH"
+          - name: pa-identifiant-agent
+            in: header
+            value: "BATCH"
           - name: ft-jeton-usager
             in: header
             description: Jeton usager obtenu à l'étape précédente et requis pour exécuter cette étape du workflow
-            value: $steps.forger-jeton-usager.output.jetonUsager
+            value: $steps.forger-jeton-usager.outputs.jetonUsager
           - name: identifiantSanction
             in: query
             value: $steps.transmettre-decision-sanction-usager.outputs.identifiantConsequenceSanction
@@ -420,10 +548,19 @@ workflows:
           - name: Authorization
             in: header
             value: "Bearer $steps.recuperer-access-token.outputs.accessToken"
+          - name: pa-nom-agent
+            in: header
+            value: "BATCH"
+          - name: pa-prenom-agent
+            in: header
+            value: "BATCH"
+          - name: pa-identifiant-agent
+            in: header
+            value: "BATCH"
           - name: ft-jeton-usager
             in: header
             description: Jeton usager obtenu à l'étape précédente et requis pour exécuter cette étape du workflow
-            value: $steps.forger-jeton-usager.output.jetonUsager
+            value: $steps.forger-jeton-usager.outputs.jetonUsager
         requestBody:
           contentType: application/json
           payload:
@@ -431,4 +568,4 @@ workflows:
         successCriteria:
           - condition: $statusCode == 200
 
-      
+          

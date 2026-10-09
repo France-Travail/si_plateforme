@@ -1,7 +1,7 @@
 {
   "info": {
-    "_postman_id": "466efc32-de81-40c9-bb9d-35b41d778cbc",
-    "name": "Loi Plein Emploi - parcours fonctionnels",
+    "_postman_id": "ef5ee198-cd67-4149-b106-1a4acf4d3a5d",
+    "name": "Loi Plein Emploi – parcours fonctionnels autour des sanctions",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -19,7 +19,7 @@
       "name": "Valider une proposition de suspension de RSA pour un bRSA accompagné par FT",
       "item": [
         {
-          "name": "Récupération du token d'accès",
+          "name": "1. Récupération du token d'accès",
           "request": {
             "method": "POST",
             "header": [],
@@ -32,6 +32,13 @@
                 "connexion",
                 "oauth2",
                 "access_token"
+              ],
+              "query": [
+                {
+                  "key": "realm",
+                  "value": "/agent",
+                  "description": ""
+                }
               ]
             },
             "body": {
@@ -66,10 +73,10 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
+                  "pm.test(\"Vérifier la réponse\", function () {",
                   "    pm.response.to.have.status(200);",
                   "});",
-                  "pm.test(\"access_token is not null\", function () {",
+                  "pm.test(\"Vérifier que token d'accès est présent\", function () {",
                   "    var jsonData = pm.response.json();",
                   "    pm.expect(jsonData.access_token).to.not.be.null;",
                   "});",
@@ -84,27 +91,24 @@
           ]
         },
         {
-          "name": "Récupération des propositions de suspension RSA",
+          "name": "2. Récupération des propositions de suspension RSA",
           "request": {
             "method": "GET",
             "header": [
               {
                 "key": "pa-nom-agent",
-                "value": "{{pa-nom-agent}}",
-                "description": "**Attribut obligatoire en mode Client Credentials.**\n\n.Nom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.\n\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch.",
-                "disabled": true
+                "value": "BATCH",
+                "description": "**Attribut obligatoire en mode Client Credentials.**\n\n.Nom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.\n\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch."
               },
               {
                 "key": "pa-prenom-agent",
-                "value": "{{pa-prenom-agent}}",
-                "description": "**Attribut obligatoire en mode Client Credentials.**\n\n.Prénom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.\n\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch.",
-                "disabled": true
+                "value": "BATCH",
+                "description": "**Attribut obligatoire en mode Client Credentials.**\n\n.Prénom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.\n\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch."
               },
               {
                 "key": "pa-identifiant-agent",
-                "value": "{{pa-identifiant-agent}}",
-                "description": "**Attribut obligatoire en mode Client Credentials.**\n\nIdentifiant de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.\n\nDans le cadre d'un appel depuis un traitement de type batch, renseigner \"BATCH\"",
-                "disabled": true
+                "value": "BATCH",
+                "description": "**Attribut obligatoire en mode Client Credentials.**\n\nIdentifiant de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.\n\nDans le cadre d'un appel depuis un traitement de type batch, renseigner \"BATCH\""
               },
               {
                 "key": "Authorization",
@@ -155,22 +159,22 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
+                  "pm.test(\"Vérifier la réponse\", function () {",
                   "    pm.response.to.have.status(200);",
                   "});",
-                  "pm.test(\"activites[0].usager[0].typeIdentifiant equals numeroFranceTravail\", function () {",
+                  "pm.test(\"Vérifier que type d'identifiant est numeroFranceTravail\", function () {",
                   "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.activites[0].usager[0].typeIdentifiant).to.eql(\"numeroFranceTravail\");",
+                  "    pm.expect(jsonData.activites[0].usager.typeIdentifiant).to.eql(\"numeroFranceTravail\");",
                   "});",
-                  "pm.test(\"activites[0].attributsSpecifiques[0].nom equals identifiantConsequenceSanction\", function () {",
+                  "pm.test(\"Vérifier que valeur est présent\", function () {",
                   "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.activites[0].attributsSpecifiques[0].nom).to.eql(\"identifiantConsequenceSanction\");",
+                  "    pm.expect((function(){ var found = jsonData.activites[0].attributsSpecifiques.find(a => a.nom === \"idConsequenceSanction\"); return found ? found.valeur : null; })()).to.not.be.null;",
                   "});",
                   "",
                   "// Persistance des outputs dans l'environnement Postman",
                   "var jsonData = pm.response.json();",
-                  "pm.environment.set(\"recuperer-propositions-suspension-RSA-a-instruire_numeroFranceTravail\", jsonData.activites[0].usager[0].identifiant);",
-                  "pm.environment.set(\"recuperer-propositions-suspension-RSA-a-instruire_identifiantConsequenceSanction\", jsonData.activites[0].attributsSpecifiques[0].valeur);"
+                  "pm.environment.set(\"recuperer-propositions-suspension-RSA-a-instruire_numeroFranceTravail\", jsonData.activites[0].usager.identifiant);",
+                  "pm.environment.set(\"recuperer-propositions-suspension-RSA-a-instruire_identifiantConsequenceSanction\", (function(){ var found = jsonData.activites[0].attributsSpecifiques.find(a => a.nom === \"idConsequenceSanction\"); return found ? found.valeur : null; })());"
                 ],
                 "type": "text/javascript"
               }
@@ -178,28 +182,28 @@
           ]
         },
         {
-          "name": "Génération du jeton usager",
+          "name": "3. Génération du jeton usager",
           "request": {
             "method": "POST",
             "header": [
               {
                 "key": "pa-nom-agent",
-                "value": "Martin",
+                "value": "BATCH",
                 "description": "**Attribut obligatoire en mode Client Credentials**.\r\n\r\n Nom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.\r\n\r\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch."
               },
               {
                 "key": "pa-prenom-agent",
-                "value": "Henri",
+                "value": "BATCH",
                 "description": "**Attribut obligatoire en mode Client Credentials**.\r\n\r\n Prénom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.\r\n\r\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch."
               },
               {
                 "key": "pa-identifiant-agent",
-                "value": "IdentifiantAgent",
+                "value": "BATCH",
                 "description": "**Attribut obligatoire en mode Client Credentials**.\r\n\r\n Identifiant de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.\r\n\r\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch."
               },
               {
                 "key": "Authorization",
-                "value": "Bearer {{{recuperer-access-token_accessToken}}",
+                "value": "Bearer {{recuperer-access-token_accessToken}}",
                 "description": "Token d'authentification Bearer"
               }
             ],
@@ -224,17 +228,17 @@
                 }
               }
             },
-            "description": "Génération d’un jeton d’habilitation qui permettra au partenaire de consulter les données de sanctions par usager.  Cette étape doit être exécutée pour chaque usager retourné à l’étape précédente."
+            "description": "Génération d’un jeton d’habilitation qui permettra au partenaire de consulter les données de sanctions par usager. Cette étape doit être exécutée pour chaque usager retourné à l’étape précédente."
           },
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
+                  "pm.test(\"Vérifier la réponse\", function () {",
                   "    pm.response.to.have.status(200);",
                   "});",
-                  "pm.test(\"jetonUsager is not null\", function () {",
+                  "pm.test(\"Vérifier que jeton usager est présent\", function () {",
                   "    var jsonData = pm.response.json();",
                   "    pm.expect(jsonData.jetonUsager).to.not.be.null;",
                   "});",
@@ -249,32 +253,29 @@
           ]
         },
         {
-          "name": "Consultation de la proposition de sanction",
+          "name": "4. Consultation de la proposition de sanction",
           "request": {
             "method": "GET",
             "header": [
               {
                 "key": "ft-jeton-usager",
-                "value": "$steps.forger-jeton-usager.output.jetonUsager",
+                "value": "{{forger-jeton-usager_jetonUsager}}",
                 "description": "Ce jeton permet d'appeler une API pour accéder aux données d'un usager. Il remplace l'identifiant national (idRci). \n\n Pour obtenir un jeton, il est nécessaire d'appeler au préalable l'API Rechercher usager.\n\n Attention, ce jeton est 'volatile' et a une durée de vie limitée (actuellement à une journée)."
               },
               {
                 "key": "pa-nom-agent",
-                "value": "Doe",
-                "description": "**Attribut obligatoire en mode Client Credentials**.<br>\nNom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch.\n",
-                "disabled": true
+                "value": "BATCH",
+                "description": "**Attribut obligatoire en mode Client Credentials**.<br>\nNom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch.\n"
               },
               {
                 "key": "pa-prenom-agent",
-                "value": "John",
-                "description": "**Attribut obligatoire en mode Client Credentials.**<br>\nPrénom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch.\n",
-                "disabled": true
+                "value": "BATCH",
+                "description": "**Attribut obligatoire en mode Client Credentials.**<br>\nPrénom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch.\n"
               },
               {
                 "key": "pa-identifiant-agent",
-                "value": "monidentifiant",
-                "description": "**Attribut obligatoire en mode Client Credentials.**<br>\nIdentifiant de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner \"BATCH\"\n",
-                "disabled": true
+                "value": "BATCH",
+                "description": "**Attribut obligatoire en mode Client Credentials.**<br>\nIdentifiant de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner \"BATCH\"\n"
               },
               {
                 "key": "Authorization",
@@ -300,14 +301,14 @@
                 }
               ]
             },
-            "description": "Consultation de la proposition de sanction d'un usager. Cette étape doit être répétée pour chaque usager retourné à l’étape $steps.recuperer-propositions-suspension-RSA-a-instruire.stepId"
+            "description": "Consultation de la proposition de sanction d’un usager. Cette étape doit être répétée pour chaque usager retourné à l’étape $steps.recuperer-propositions-suspension-RSA-a-instruire.stepId"
           },
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
+                  "pm.test(\"Vérifier la réponse\", function () {",
                   "    pm.response.to.have.status(200);",
                   "});",
                   "",
@@ -324,7 +325,7 @@
           ]
         },
         {
-          "name": "Instruction de la proposition de sanction",
+          "name": "5. Instruction de la proposition de sanction",
           "request": {
             "method": "POST",
             "header": [
@@ -335,21 +336,18 @@
               },
               {
                 "key": "pa-nom-agent",
-                "value": "Doe",
-                "description": "**Attribut obligatoire en mode Client Credentials**.<br>\nNom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch.\n",
-                "disabled": true
+                "value": "BATCH",
+                "description": "**Attribut obligatoire en mode Client Credentials**.<br>\nNom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch.\n"
               },
               {
                 "key": "pa-prenom-agent",
-                "value": "John",
-                "description": "**Attribut obligatoire en mode Client Credentials.**<br>\nPrénom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch.\n",
-                "disabled": true
+                "value": "BATCH",
+                "description": "**Attribut obligatoire en mode Client Credentials.**<br>\nPrénom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch.\n"
               },
               {
                 "key": "pa-identifiant-agent",
-                "value": "monidentifiant",
-                "description": "**Attribut obligatoire en mode Client Credentials.**<br>\nIdentifiant de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner \"BATCH\"\n",
-                "disabled": true
+                "value": "BATCH",
+                "description": "**Attribut obligatoire en mode Client Credentials.**<br>\nIdentifiant de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner \"BATCH\"\n"
               },
               {
                 "key": "Authorization",
@@ -377,17 +375,17 @@
                 }
               }
             },
-            "description": "Instruire la proposition de sanction d'un usager.  Cette étape doit être répétée pour chaque usager retourné à l’étape $steps.recuperer-propositions-suspension-RSA-a-instruire.stepId. Ici on saisit (i.e. on indique qu'on instruit) la sanction proposée (SAISIE_SANCTION).  Mais il est aussi possible de refuser l'instruction (REFUS_SAISIE_SANCTION). Attention REFUS_SAISIE_SANCTION signifie que la sanction est validée telle que préconisée par FranceTravail."
+            "description": "Instruire la proposition de sanction d’un usager. Cette étape doit être répétée pour chaque usager retourné à l’étape $steps.recuperer-propositions-suspension-RSA-a-instruire.stepId. Ici on saisit (i.e. on indique qu’on instruit) la sanction proposée (SAISIE_SANCTION). Mais il est aussi possible de refuser l’instruction (REFUS_SAISIE_SANCTION). Attention REFUS_SAISIE_SANCTION signifie que la sanction est validée telle que préconisée par FranceTravail."
           },
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
+                  "pm.test(\"Vérifier la réponse\", function () {",
                   "    pm.response.to.have.status(200);",
                   "});",
-                  "pm.test(\"codeSortie equals C001\", function () {",
+                  "pm.test(\"Vérifier que code sortie est C001\", function () {",
                   "    var jsonData = pm.response.json();",
                   "    pm.expect(jsonData.codeSortie).to.eql(\"C001\");",
                   "});"
@@ -398,7 +396,7 @@
           ]
         },
         {
-          "name": "Validation de la suspension RSA",
+          "name": "6. Validation de la suspension RSA",
           "request": {
             "method": "POST",
             "header": [
@@ -409,21 +407,18 @@
               },
               {
                 "key": "pa-nom-agent",
-                "value": "Doe",
-                "description": "**Attribut obligatoire en mode Client Credentials**.<br>\nNom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch.\n",
-                "disabled": true
+                "value": "BATCH",
+                "description": "**Attribut obligatoire en mode Client Credentials**.<br>\nNom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch.\n"
               },
               {
                 "key": "pa-prenom-agent",
-                "value": "John",
-                "description": "**Attribut obligatoire en mode Client Credentials.**<br>\nPrénom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch.\n",
-                "disabled": true
+                "value": "BATCH",
+                "description": "**Attribut obligatoire en mode Client Credentials.**<br>\nPrénom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch.\n"
               },
               {
                 "key": "pa-identifiant-agent",
-                "value": "monidentifiant",
-                "description": "**Attribut obligatoire en mode Client Credentials.**<br>\nIdentifiant de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner \"BATCH\"\n",
-                "disabled": true
+                "value": "BATCH",
+                "description": "**Attribut obligatoire en mode Client Credentials.**<br>\nIdentifiant de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner \"BATCH\"\n"
               },
               {
                 "key": "Authorization",
@@ -458,10 +453,10 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
+                  "pm.test(\"Vérifier la réponse\", function () {",
                   "    pm.response.to.have.status(200);",
                   "});",
-                  "pm.test(\"codeSortie equals C001\", function () {",
+                  "pm.test(\"Vérifier que code sortie est C001\", function () {",
                   "    var jsonData = pm.response.json();",
                   "    pm.expect(jsonData.codeSortie).to.eql(\"C001\");",
                   "});"
@@ -478,7 +473,7 @@
       "name": "Valider une proposition de suppression de RSA pour un bRSA accompagné par FT",
       "item": [
         {
-          "name": "Récupération du token d'accès",
+          "name": "1. Récupération du token d'accès",
           "request": {
             "method": "POST",
             "header": [],
@@ -491,6 +486,13 @@
                 "connexion",
                 "oauth2",
                 "access_token"
+              ],
+              "query": [
+                {
+                  "key": "realm",
+                  "value": "/agent",
+                  "description": ""
+                }
               ]
             },
             "body": {
@@ -525,10 +527,10 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
+                  "pm.test(\"Vérifier la réponse\", function () {",
                   "    pm.response.to.have.status(200);",
                   "});",
-                  "pm.test(\"access_token is not null\", function () {",
+                  "pm.test(\"Vérifier que token d'accès est présent\", function () {",
                   "    var jsonData = pm.response.json();",
                   "    pm.expect(jsonData.access_token).to.not.be.null;",
                   "});",
@@ -543,27 +545,24 @@
           ]
         },
         {
-          "name": "Récupération des propositions de suppression RSA",
+          "name": "2. Récupération des propositions de suppression RSA",
           "request": {
             "method": "GET",
             "header": [
               {
                 "key": "pa-nom-agent",
-                "value": "{{pa-nom-agent}}",
-                "description": "**Attribut obligatoire en mode Client Credentials.**\n\n.Nom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.\n\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch.",
-                "disabled": true
+                "value": "BATCH",
+                "description": "**Attribut obligatoire en mode Client Credentials.**\n\n.Nom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.\n\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch."
               },
               {
                 "key": "pa-prenom-agent",
-                "value": "{{pa-prenom-agent}}",
-                "description": "**Attribut obligatoire en mode Client Credentials.**\n\n.Prénom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.\n\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch.",
-                "disabled": true
+                "value": "BATCH",
+                "description": "**Attribut obligatoire en mode Client Credentials.**\n\n.Prénom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.\n\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch."
               },
               {
                 "key": "pa-identifiant-agent",
-                "value": "{{pa-identifiant-agent}}",
-                "description": "**Attribut obligatoire en mode Client Credentials.**\n\nIdentifiant de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.\n\nDans le cadre d'un appel depuis un traitement de type batch, renseigner \"BATCH\"",
-                "disabled": true
+                "value": "BATCH",
+                "description": "**Attribut obligatoire en mode Client Credentials.**\n\nIdentifiant de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.\n\nDans le cadre d'un appel depuis un traitement de type batch, renseigner \"BATCH\""
               },
               {
                 "key": "Authorization",
@@ -615,22 +614,22 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
+                  "pm.test(\"Vérifier la réponse\", function () {",
                   "    pm.response.to.have.status(200);",
                   "});",
-                  "pm.test(\"activites[0].usager[0].typeIdentifiant equals numeroFranceTravail\", function () {",
+                  "pm.test(\"Vérifier que type d'identifiant est numeroFranceTravail\", function () {",
                   "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.activites[0].usager[0].typeIdentifiant).to.eql(\"numeroFranceTravail\");",
+                  "    pm.expect(jsonData.activites[0].usager.typeIdentifiant).to.eql(\"numeroFranceTravail\");",
                   "});",
-                  "pm.test(\"activites[0].attributsSpecifiques[0].nom equals identifiantConsequenceSanction\", function () {",
+                  "pm.test(\"Vérifier que valeur est présent\", function () {",
                   "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.activites[0].attributsSpecifiques[0].nom).to.eql(\"identifiantConsequenceSanction\");",
+                  "    pm.expect((function(){ var found = jsonData.activites[0].attributsSpecifiques.find(a => a.nom === \"idConsequenceSanction\"); return found ? found.valeur : null; })()).to.not.be.null;",
                   "});",
                   "",
                   "// Persistance des outputs dans l'environnement Postman",
                   "var jsonData = pm.response.json();",
-                  "pm.environment.set(\"recuperer-propositions-suppression-RSA-a-traiter_numeroFranceTravail\", jsonData.activites[0].usager[0].identifiant);",
-                  "pm.environment.set(\"recuperer-propositions-suppression-RSA-a-traiter_identifiantConsequenceSanction\", jsonData.activites[0].attributsSpecifiques[0].valeur);"
+                  "pm.environment.set(\"recuperer-propositions-suppression-RSA-a-traiter_numeroFranceTravail\", jsonData.activites[0].usager.identifiant);",
+                  "pm.environment.set(\"recuperer-propositions-suppression-RSA-a-traiter_identifiantConsequenceSanction\", (function(){ var found = jsonData.activites[0].attributsSpecifiques.find(a => a.nom === \"idConsequenceSanction\"); return found ? found.valeur : null; })());"
                 ],
                 "type": "text/javascript"
               }
@@ -638,28 +637,28 @@
           ]
         },
         {
-          "name": "Génération du jeton usager",
+          "name": "3. Génération du jeton usager",
           "request": {
             "method": "POST",
             "header": [
               {
                 "key": "pa-nom-agent",
-                "value": "Martin",
+                "value": "BATCH",
                 "description": "**Attribut obligatoire en mode Client Credentials**.\r\n\r\n Nom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.\r\n\r\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch."
               },
               {
                 "key": "pa-prenom-agent",
-                "value": "Henri",
+                "value": "BATCH",
                 "description": "**Attribut obligatoire en mode Client Credentials**.\r\n\r\n Prénom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.\r\n\r\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch."
               },
               {
                 "key": "pa-identifiant-agent",
-                "value": "IdentifiantAgent",
+                "value": "BATCH",
                 "description": "**Attribut obligatoire en mode Client Credentials**.\r\n\r\n Identifiant de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.\r\n\r\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch."
               },
               {
                 "key": "Authorization",
-                "value": "Bearer {{{recuperer-access-token_accessToken}}",
+                "value": "Bearer {{recuperer-access-token_accessToken}}",
                 "description": "Token d'authentification Bearer"
               }
             ],
@@ -691,10 +690,10 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
+                  "pm.test(\"Vérifier la réponse\", function () {",
                   "    pm.response.to.have.status(200);",
                   "});",
-                  "pm.test(\"jetonUsager is not null\", function () {",
+                  "pm.test(\"Vérifier que jeton usager est présent\", function () {",
                   "    var jsonData = pm.response.json();",
                   "    pm.expect(jsonData.jetonUsager).to.not.be.null;",
                   "});",
@@ -709,32 +708,29 @@
           ]
         },
         {
-          "name": "Consultation de la proposition de suppression RSA",
+          "name": "4. Consultation de la proposition de suppression RSA",
           "request": {
             "method": "GET",
             "header": [
               {
                 "key": "ft-jeton-usager",
-                "value": "$steps.forger-jeton-usager.output.jetonUsager",
+                "value": "{{forger-jeton-usager_jetonUsager}}",
                 "description": "Ce jeton permet d'appeler une API pour accéder aux données d'un usager. Il remplace l'identifiant national (idRci). \n\n Pour obtenir un jeton, il est nécessaire d'appeler au préalable l'API Rechercher usager.\n\n Attention, ce jeton est 'volatile' et a une durée de vie limitée (actuellement à une journée)."
               },
               {
                 "key": "pa-nom-agent",
-                "value": "Doe",
-                "description": "**Attribut obligatoire en mode Client Credentials**.<br>\nNom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch.\n",
-                "disabled": true
+                "value": "BATCH",
+                "description": "**Attribut obligatoire en mode Client Credentials**.<br>\nNom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch.\n"
               },
               {
                 "key": "pa-prenom-agent",
-                "value": "John",
-                "description": "**Attribut obligatoire en mode Client Credentials.**<br>\nPrénom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch.\n",
-                "disabled": true
+                "value": "BATCH",
+                "description": "**Attribut obligatoire en mode Client Credentials.**<br>\nPrénom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch.\n"
               },
               {
                 "key": "pa-identifiant-agent",
-                "value": "monidentifiant",
-                "description": "**Attribut obligatoire en mode Client Credentials.**<br>\nIdentifiant de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner \"BATCH\"\n",
-                "disabled": true
+                "value": "BATCH",
+                "description": "**Attribut obligatoire en mode Client Credentials.**<br>\nIdentifiant de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner \"BATCH\"\n"
               },
               {
                 "key": "Authorization",
@@ -767,7 +763,7 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
+                  "pm.test(\"Vérifier la réponse\", function () {",
                   "    pm.response.to.have.status(200);",
                   "});",
                   "",
@@ -784,7 +780,7 @@
           ]
         },
         {
-          "name": "Validation de la suppression RSA",
+          "name": "5. Validation de la suppression RSA",
           "request": {
             "method": "POST",
             "header": [
@@ -795,21 +791,18 @@
               },
               {
                 "key": "pa-nom-agent",
-                "value": "Doe",
-                "description": "**Attribut obligatoire en mode Client Credentials**.<br>\nNom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch.\n",
-                "disabled": true
+                "value": "BATCH",
+                "description": "**Attribut obligatoire en mode Client Credentials**.<br>\nNom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch.\n"
               },
               {
                 "key": "pa-prenom-agent",
-                "value": "John",
-                "description": "**Attribut obligatoire en mode Client Credentials.**<br>\nPrénom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch.\n",
-                "disabled": true
+                "value": "BATCH",
+                "description": "**Attribut obligatoire en mode Client Credentials.**<br>\nPrénom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch.\n"
               },
               {
                 "key": "pa-identifiant-agent",
-                "value": "monidentifiant",
-                "description": "**Attribut obligatoire en mode Client Credentials.**<br>\nIdentifiant de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner \"BATCH\"\n",
-                "disabled": true
+                "value": "BATCH",
+                "description": "**Attribut obligatoire en mode Client Credentials.**<br>\nIdentifiant de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner \"BATCH\"\n"
               },
               {
                 "key": "Authorization",
@@ -844,10 +837,10 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
+                  "pm.test(\"Vérifier la réponse\", function () {",
                   "    pm.response.to.have.status(200);",
                   "});",
-                  "pm.test(\"codeSortie equals C001\", function () {",
+                  "pm.test(\"Vérifier que code sortie est C001\", function () {",
                   "    var jsonData = pm.response.json();",
                   "    pm.expect(jsonData.codeSortie).to.eql(\"C001\");",
                   "});"
@@ -861,10 +854,10 @@
       "description": "Ce workflow décrit comment un partenaire confirme une proposition de suppression de RSA initiée par France Travail. France Travail, en tant que référent d'accompagnement d'un usager bRSA, effectue les contrôles de respect des engagements et peut être amené à transmettre des propositions de sanction pour cet usager en cas de manquement. Le partenaire a alors la responsabilité de confirmer ou d'infirmer la proposition de sanction. Ce workflow décrit un cas de proposition de suppression de RSA. A noter qu'il est quasi identique au workflow pour une levée de suspension RSA, au paramétrage près (codeActivite : ACT369, typeEvenement : VALID_LEVEE_SUSP ou REFUS_LEVEE_SUSP)."
     },
     {
-      "name": "Transmettre une demande de radiation d'un usager",
+      "name": "Transmettre une demande de radiation d’un usager",
       "item": [
         {
-          "name": "Récupération du token d'accès",
+          "name": "1. Récupération du token d'accès",
           "request": {
             "method": "POST",
             "header": [],
@@ -877,6 +870,13 @@
                 "connexion",
                 "oauth2",
                 "access_token"
+              ],
+              "query": [
+                {
+                  "key": "realm",
+                  "value": "/agent",
+                  "description": ""
+                }
               ]
             },
             "body": {
@@ -911,10 +911,10 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
+                  "pm.test(\"Vérifier la réponse\", function () {",
                   "    pm.response.to.have.status(200);",
                   "});",
-                  "pm.test(\"access_token is not null\", function () {",
+                  "pm.test(\"Vérifier que token d'accès est présent\", function () {",
                   "    var jsonData = pm.response.json();",
                   "    pm.expect(jsonData.access_token).to.not.be.null;",
                   "});",
@@ -929,28 +929,28 @@
           ]
         },
         {
-          "name": "Génération du jeton usager",
+          "name": "2. Génération du jeton usager",
           "request": {
             "method": "POST",
             "header": [
               {
                 "key": "pa-nom-agent",
-                "value": "Martin",
+                "value": "BATCH",
                 "description": "**Attribut obligatoire en mode Client Credentials**.\r\n\r\n Nom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.\r\n\r\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch."
               },
               {
                 "key": "pa-prenom-agent",
-                "value": "Henri",
+                "value": "BATCH",
                 "description": "**Attribut obligatoire en mode Client Credentials**.\r\n\r\n Prénom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.\r\n\r\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch."
               },
               {
                 "key": "pa-identifiant-agent",
-                "value": "IdentifiantAgent",
+                "value": "BATCH",
                 "description": "**Attribut obligatoire en mode Client Credentials**.\r\n\r\n Identifiant de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.\r\n\r\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch."
               },
               {
                 "key": "Authorization",
-                "value": "Bearer {{{recuperer-access-token_accessToken}}",
+                "value": "Bearer {{recuperer-access-token_accessToken}}",
                 "description": "Token d'authentification Bearer"
               }
             ],
@@ -975,17 +975,17 @@
                 }
               }
             },
-            "description": "Génération d’un jeton d’habilitation qui permettra au partenaire de consulter les données de sanctions par usager.  Cette étape doit être exécutée pour chaque usager retourné à l’étape précédente."
+            "description": "Génération d’un jeton d’habilitation qui permettra au partenaire de consulter les données de sanctions par usager. Cette étape doit être exécutée pour chaque usager retourné à l’étape précédente."
           },
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
+                  "pm.test(\"Vérifier la réponse\", function () {",
                   "    pm.response.to.have.status(200);",
                   "});",
-                  "pm.test(\"jetonUsager is not null\", function () {",
+                  "pm.test(\"Vérifier que jeton usager est présent\", function () {",
                   "    var jsonData = pm.response.json();",
                   "    pm.expect(jsonData.jetonUsager).to.not.be.null;",
                   "});",
@@ -1000,7 +1000,7 @@
           ]
         },
         {
-          "name": "Transmission de la décision de sanction",
+          "name": "3. Transmission de la décision de sanction",
           "request": {
             "method": "POST",
             "header": [
@@ -1011,21 +1011,18 @@
               },
               {
                 "key": "pa-nom-agent",
-                "value": "Doe",
-                "description": "**Attribut obligatoire en mode Client Credentials**.<br>\nNom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch.\n",
-                "disabled": true
+                "value": "BATCH",
+                "description": "**Attribut obligatoire en mode Client Credentials**.<br>\nNom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch.\n"
               },
               {
                 "key": "pa-prenom-agent",
-                "value": "John",
-                "description": "**Attribut obligatoire en mode Client Credentials.**<br>\nPrénom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch.\n",
-                "disabled": true
+                "value": "BATCH",
+                "description": "**Attribut obligatoire en mode Client Credentials.**<br>\nPrénom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch.\n"
               },
               {
                 "key": "pa-identifiant-agent",
-                "value": "monidentifiant",
-                "description": "**Attribut obligatoire en mode Client Credentials.**<br>\nIdentifiant de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner \"BATCH\"\n",
-                "disabled": true
+                "value": "BATCH",
+                "description": "**Attribut obligatoire en mode Client Credentials.**<br>\nIdentifiant de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner \"BATCH\"\n"
               },
               {
                 "key": "Authorization",
@@ -1051,10 +1048,10 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
+                  "pm.test(\"Vérifier la réponse\", function () {",
                   "    pm.response.to.have.status(200);",
                   "});",
-                  "pm.test(\"codeSortie equals C001\", function () {",
+                  "pm.test(\"Vérifier que code sortie est C001\", function () {",
                   "    var jsonData = pm.response.json();",
                   "    pm.expect(jsonData.codeSortie).to.eql(\"C001\");",
                   "});",
@@ -1069,32 +1066,29 @@
           ]
         },
         {
-          "name": "Vérification de la décision de sanction",
+          "name": "4. Vérification de la décision de sanction",
           "request": {
             "method": "GET",
             "header": [
               {
                 "key": "ft-jeton-usager",
-                "value": "$steps.forger-jeton-usager.output.jetonUsager",
+                "value": "{{forger-jeton-usager_jetonUsager}}",
                 "description": "Ce jeton permet d'appeler une API pour accéder aux données d'un usager. Il remplace l'identifiant national (idRci). \n\n Pour obtenir un jeton, il est nécessaire d'appeler au préalable l'API Rechercher usager.\n\n Attention, ce jeton est 'volatile' et a une durée de vie limitée (actuellement à une journée)."
               },
               {
                 "key": "pa-nom-agent",
-                "value": "Doe",
-                "description": "**Attribut obligatoire en mode Client Credentials**.<br>\nNom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch.\n",
-                "disabled": true
+                "value": "BATCH",
+                "description": "**Attribut obligatoire en mode Client Credentials**.<br>\nNom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch.\n"
               },
               {
                 "key": "pa-prenom-agent",
-                "value": "John",
-                "description": "**Attribut obligatoire en mode Client Credentials.**<br>\nPrénom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch.\n",
-                "disabled": true
+                "value": "BATCH",
+                "description": "**Attribut obligatoire en mode Client Credentials.**<br>\nPrénom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch.\n"
               },
               {
                 "key": "pa-identifiant-agent",
-                "value": "monidentifiant",
-                "description": "**Attribut obligatoire en mode Client Credentials.**<br>\nIdentifiant de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner \"BATCH\"\n",
-                "disabled": true
+                "value": "BATCH",
+                "description": "**Attribut obligatoire en mode Client Credentials.**<br>\nIdentifiant de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner \"BATCH\"\n"
               },
               {
                 "key": "Authorization",
@@ -1127,7 +1121,7 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
+                  "pm.test(\"Vérifier la réponse\", function () {",
                   "    pm.response.to.have.status(200);",
                   "});"
                 ],
@@ -1137,32 +1131,29 @@
           ]
         },
         {
-          "name": "Transmission de la demande de radiation",
+          "name": "5. Transmission de la demande de radiation",
           "request": {
             "method": "POST",
             "header": [
               {
                 "key": "ft-jeton-usager",
-                "value": "$steps.forger-jeton-usager.output.jetonUsager",
+                "value": "{{forger-jeton-usager_jetonUsager}}",
                 "description": "Ce jeton permet d'appeler une API pour accéder aux données d'un usager. Il remplace l'identifiant national (idRci). \n\n Pour obtenir un jeton, il est nécessaire d'appeler au préalable l'API Rechercher usager.\n\n Attention, ce jeton est 'volatile' et a une durée de vie limitée (actuellement à une journée)."
               },
               {
                 "key": "pa-nom-agent",
-                "value": "Doe",
-                "description": "**Attribut obligatoire en mode Client Credentials**.<br>\nNom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch.\n",
-                "disabled": true
+                "value": "BATCH",
+                "description": "**Attribut obligatoire en mode Client Credentials**.<br>\nNom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch.\n"
               },
               {
                 "key": "pa-prenom-agent",
-                "value": "John",
-                "description": "**Attribut obligatoire en mode Client Credentials.**<br>\nPrénom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch.\n",
-                "disabled": true
+                "value": "BATCH",
+                "description": "**Attribut obligatoire en mode Client Credentials.**<br>\nPrénom de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner un nom logique de batch.\n"
               },
               {
                 "key": "pa-identifiant-agent",
-                "value": "monidentifiant",
-                "description": "**Attribut obligatoire en mode Client Credentials.**<br>\nIdentifiant de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner \"BATCH\"\n",
-                "disabled": true
+                "value": "BATCH",
+                "description": "**Attribut obligatoire en mode Client Credentials.**<br>\nIdentifiant de l'agent partenaire à l'origine de l'appel. Le caractère spécial pipe/barre verticale ' | ' est interdit.<br>\nDans le cadre d'un appel depuis un traitement de type batch, renseigner \"BATCH\"\n"
               },
               {
                 "key": "Authorization",
@@ -1197,7 +1188,7 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
+                  "pm.test(\"Vérifier la réponse\", function () {",
                   "    pm.response.to.have.status(200);",
                   "});"
                 ],
@@ -1207,7 +1198,7 @@
           ]
         }
       ],
-      "description": "Ce workflow décrit comment un partenaire partage une décision de sanction RSA prise pour un usager qu'il accompagne, si la décision légitime une demande de radiation de la liste des demandeurs d'emploi.  Dans ce cas ce n'est pas Francetravail qui est à l'origine de la proposition de sanction, mais le partenaire. Ce workflow est toutefois adaptable pour un cas de demande de radiation faisant suite à une décision prise pour un bRSA accompagné par France Travail : on n'effectue pas l'étape de transmission de la décision, et on indique à l'étape de demande de radiation l'identifiant de la sanction qui a été validée suite à une proposition de sanction émise par France Travail."
+      "description": "Ce workflow décrit comment un partenaire partage une décision de sanction RSA prise pour un usager qu’il accompagne, si la décision légitime une demande de radiation de la liste des demandeurs d’emploi. Dans ce cas ce n’est pas Francetravail qui est à l’origine de la proposition de sanction, mais le partenaire. Ce workflow est toutefois adaptable pour un cas de demande de radiation faisant suite à une décision prise pour un bRSA accompagné par France Travail : on n’effectue pas l’étape de transmission de la décision, et on indique à l’étape de demande de radiation l’identifiant de la sanction qui a été validée suite à une proposition de sanction émise par France Travail."
     }
   ]
 }
